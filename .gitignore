@@ -1,0 +1,40 @@
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django specific
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Environment variables & secrets
+.env
+.env.local
+.env.*.local
+
+# Media uploads (optional: keep product static assets in git, but ignore user-generated temp uploads if needed)
+# media/
+
+# IDE & Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# Temporary scratch scripts
+scratch/

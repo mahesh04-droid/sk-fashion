@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% block title %}My Wishlist | SK Fashion Ahilyanagar{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="section-label mb-1">Personal Collection</div>
+            <h1 class="font-display font-bold text-brand-dark" style="font-size:clamp(1.5rem,3vw,2.2rem);">
+                Saved Garments
+                <span class="text-gray-400 font-sans font-normal text-base" id="wishlistHeaderCount">
+                    ({{ wishlist_total_count }} item{{ wishlist_total_count|pluralize }})
+                </span>
+            </h1>
+            <div class="gold-line mt-2"></div>
+        </div>
+
+        {% if wishlist_products %}
+        <div class="flex items-center gap-3">
+            <form action="{% url 'clear_wishlist' %}" method="POST" onsubmit="return confirm('Are you sure you want to clear your wishlist?');">
+                {% csrf_token %}
+                <button type="submit" class="btn-outline px-4 py-2 rounded-xl text-xs text-gray-500 hover:text-red-600 hover:border-red-300 transition-colors">
+                    <i class="fa-regular fa-trash-can mr-1.5"></i> Clear All
+                </button>
+            </form>
+            <a href="{% url 'product_list' %}" class="btn-dark px-5 py-2 rounded-xl text-xs">
+                Continue Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Alert / Toast Container (if messages) -->
+    {% if messages %}
+    <div class="space-y-3 mb-6">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl text-xs font-semibold flex items-center justify-between {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-red-500{% else %}fa-circle-check text-green-500{% endif %} text-sm"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if wishlist_products %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="wishlistGrid">
+        {% for product in wishlist_products %}
+        <div class="bg-white rounded-3xl border border-brand-border shadow-sm hover:shadow-md transition-all flex flex-col overflow-hidden group relative" id="wishlistCard-{{ product.id }}">
+            
+            <!-- Product Image -->
+            <div class="relative overflow-hidden" style="aspect-ratio:3/4;background:#f7f5f2;">
+                <a href="{% url 'product_detail' slug=product.slug %}">
+                    <img src="{{ product.main_image }}" alt="{{ product.name }}" class="card-img w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500">
+                </a>
+                
+                {% if product.discount_percentage > 0 %}
+                <span class="badge-off">{{ product.discount_percentage }}% OFF</span>
+                {% endif %}
+
+                <!-- Remove from wishlist button -->
+                <button type="button"
+                        onclick="removeFromWishlistPage({{ product.id }})"
+                        class="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow flex items-center justify-center text-red-500 hover:bg-red-50 transition-colors z-10"
+                        title="Remove from Wishlist">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+
+                <div class="absolute bottom-2.5 left-2.5 flex items-center gap-1.5">
+                    <span class="badge-fit" style="position:static;">{{ product.fit }}</span>
+                    {% if product.fabric %}
+                    <span class="text-[9px] font-semibold text-white bg-black/60 px-2 py-0.5 rounded backdrop-blur-sm">{{ product.fabric|truncatechars:15 }}</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Product Info & Actions -->
+            <div class="p-4 sm:p-5 flex flex-col flex-1">
+                <div class="flex items-center justify-between text-[10px] text-gray-400 mb-1">
+                    <span class="font-bold text-brand-gold uppercase tracking-wider">{{ product.category.name }}</span>
+                    <span class="flex items-center gap-1 font-semibold text-amber-500">
+                        <i class="fa-solid fa-star text-[10px]"></i> {{ product.rating }}
+                    </span>
+                </div>
+
+                <a href="{% url 'product_detail' slug=product.slug %}" class="font-bold text-brand-dark hover:text-brand-gold transition-colors line-clamp-1 mb-2 text-sm">
+                    {{ product.name }}
+                </a>
+
+                <!-- Price -->
+                <div class="flex items-baseline gap-2 mb-4">
+                    <span class="font-extrabold text-brand-dark text-lg">&#8377;{{ product.discount_price }}</span>
+                    {% if product.price > product.discount_price %}
+                    <span class="line-through text-gray-400 text-xs">&#8377;{{ product.price }}</span>
+                    {% endif %}
+                </div>
+
+                <!-- Move to Bag Form -->
+                <form action="{% url 'wishlist_move_to_bag' %}" method="POST" class="mt-auto space-y-2.5">
+                    {% csrf_token %}
+                    <input type="hidden" name="product_id" value="{{ product.id }}">
+                    
+                    <div class="flex items-center gap-2">
+                        <label class="text-[11px] font-bold text-gray-500 shrink-0">Size:</label>
+                        <select name="size" class="w-full text-xs py-1.5 px-2.5 rounded-lg border border-brand-border bg-brand-surface font-semibold text-brand-dark focus:border-brand-gold focus:outline-none">
+                            {% for variant in product.variants.all %}
+                            <option value="{{ variant.size }}" {% if forloop.first %}selected{% endif %}>
+                                {{ variant.size }} {% if variant.stock_quantity <= 3 and variant.stock_quantity > 0 %}(Only {{ variant.stock_quantity }} left){% endif %}
+                            </option>
+                            {% empty %}
+                            <option value="M">Standard (M)</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-1">
+                        <button type="submit" class="btn-dark text-xs py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 font-bold shadow-sm">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                            <span>Move to Bag</span>
+                        </button>
+                        <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20am%20interested%20in%20buying%20{{ product.name|urlencode }}%20(%E2%82%B9{{ product.discount_price }})." 
+                           target="_blank" class="btn-wa text-xs py-2.5 px-2 rounded-xl flex items-center justify-center gap-1.5 font-bold">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                            <span>WhatsApp</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <!-- Empty Wishlist State -->
+    <div class="bg-white rounded-3xl border border-brand-border p-10 sm:p-16 text-center max-w-2xl mx-auto shadow-sm space-y-6">
+        <div class="w-20 h-20 rounded-full bg-red-50 text-red-500 flex items-center justify-center mx-auto text-3xl shadow-inner">
+            <i class="fa-regular fa-heart"></i>
+        </div>
+        <div class="space-y-2">
+            <h2 class="font-display font-bold text-brand-dark text-xl sm:text-2xl">Your Wishlist is Empty</h2>
+            <p class="text-xs sm:text-sm text-gray-500 max-w-md mx-auto leading-relaxed">
+                Save garments you love by clicking the heart icon on any shirt, jeans, or kurta. They will stay safely saved here until you are ready to order.
+            </p>
+        </div>
+
+        <div class="pt-2">
+            <a href="{% url 'product_list' %}" class="btn-gold inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl text-sm font-bold shadow-md">
+                <i class="fa-solid fa-shirt"></i>
+                <span>Explore Ahilyanagar Collection</span>
+            </a>
+        </div>
+
+        <!-- Quick category suggestions -->
+        <div class="pt-6 border-t border-brand-border">
+            <span class="block text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-3">Popular Categories</span>
+            <div class="flex flex-wrap justify-center gap-2">
+                {% for cat in nav_categories %}
+                <a href="{% url 'product_list' %}?category={{ cat.slug }}" class="cat-pill text-xs">
+                    {{ cat.name }}
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function removeFromWishlistPage(productId) {
+    const card = document.getElementById(`wishlistCard-${productId}`);
+    if (!card) return;
+
+    try {
+        const response = await fetch("{% url 'toggle_wishlist' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ product_id: productId })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            // Animate card removal
+            card.style.transition = 'all 0.3s ease';
+            card.style.transform = 'scale(0.8)';
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.remove();
+                
+                // Update badge in header
+                updateHeaderWishlistCount(data.wishlist_count);
+                
+                // Update header text count
+                const headerCount = document.getElementById('wishlistHeaderCount');
+                if (headerCount) {
+                    headerCount.textContent = `(${data.wishlist_count} item${data.wishlist_count === 1 ? '' : 's'})`;
+                }
+
+                // If empty, reload page to show empty state
+                if (data.wishlist_count === 0) {
+                    window.location.reload();
+                }
+            }, 300);
+        }
+    } catch (err) {
+        console.error('Error removing from wishlist:', err);
+    }
+}
+</script>
+{% endblock %}

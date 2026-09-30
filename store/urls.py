@@ -1,0 +1,31 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.home, name='home'),
+    path('products/', views.product_list, name='product_list'),
+    path('product/<slug:slug>/', views.product_detail, name='product_detail'),
+    path('product/<slug:slug>/review/', views.submit_review, name='submit_review'),
+    path('cart/', views.cart_view, name='cart_view'),
+    path('cart/add/', views.add_to_cart, name='add_to_cart'),
+    path('cart/update/', views.update_cart, name='update_cart'),
+    path('wishlist/', views.wishlist_view, name='wishlist_view'),
+    path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('wishlist/move-to-bag/', views.wishlist_move_to_bag, name='wishlist_move_to_bag'),
+    path('wishlist/clear/', views.clear_wishlist, name='clear_wishlist'),
+    path('checkout/', views.checkout, name='checkout'),
+    path('checkout/create-order/', views.create_razorpay_order, name='create_razorpay_order'),
+    path('payment/verify/', views.verify_razorpay_payment, name='verify_razorpay_payment'),
+    path('coupon/apply/', views.apply_coupon, name='apply_coupon'),
+    path('coupon/remove/', views.remove_coupon, name='remove_coupon'),
+    path('order-success/<str:order_id>/', views.order_success, name='order_success'),
+    path('order/<str:order_id>/invoice/', views.order_invoice, name='order_invoice'),
+    path('account/register/', views.customer_register, name='customer_register'),
+    path('account/login/', views.customer_login, name='customer_login'),
+    path('account/logout/', views.customer_logout, name='customer_logout'),
+    path('account/', views.customer_account, name='customer_account'),
+    path('account/order/<str:order_id>/reorder/', views.reorder_items, name='reorder_items'),
+    path('track-order/', views.track_order, name='track_order'),
+    path('store-locator/', views.store_locator, name='store_locator'),
+    path('sw.js', views.service_worker, name='service_worker'),
+]

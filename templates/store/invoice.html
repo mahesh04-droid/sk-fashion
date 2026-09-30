@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Invoice - {{ order.order_id }} | SK Fashion</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #eef1f5;
+            color: #111;
+            margin: 0;
+            padding: 30px 15px;
+            display: flex;
+            justify-content: center;
+        }
+        .invoice-card {
+            background: #fff;
+            width: 100%;
+            max-width: 820px;
+            padding: 48px;
+            border-radius: 18px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+            border: 1px solid #e2e8f0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 24px;
+            border-bottom: 2px solid #111;
+        }
+        .logo-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #111;
+            margin: 0;
+        }
+        .logo-subtitle {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #b8862b;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+        .store-addr {
+            font-size: 11px;
+            color: #555;
+            margin-top: 8px;
+            line-height: 1.5;
+            max-width: 320px;
+        }
+        .invoice-meta {
+            text-align: right;
+        }
+        .invoice-badge {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #111;
+            text-transform: uppercase;
+        }
+        .meta-line {
+            font-size: 12px;
+            color: #555;
+            margin-top: 4px;
+        }
+        .meta-line strong {
+            color: #111;
+        }
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 28px 0;
+        }
+        .box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .box-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #b8862b;
+            margin-bottom: 8px;
+        }
+        .box-content {
+            font-size: 12px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .box-content strong {
+            color: #111;
+            font-size: 13px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 12px;
+        }
+        th {
+            background: #111;
+            color: #fff;
+            padding: 12px 14px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #222;
+        }
+        tr:nth-child(even) td {
+            background: #fcfcfd;
+        }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        .totals-table {
+            width: 320px;
+            border-collapse: collapse;
+        }
+        .totals-table td {
+            padding: 8px 12px;
+            border: none;
+            font-size: 12px;
+        }
+        .totals-table .grand-row td {
+            border-top: 2px solid #111;
+            border-bottom: 2px solid #111;
+            font-weight: 800;
+            font-size: 16px;
+            color: #111;
+            padding: 12px;
+        }
+        .badge-paid {
+            display: inline-block;
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .badge-pending {
+            display: inline-block;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .badge-cod {
+            display: inline-block;
+            background: #fefce8;
+            color: #a16207;
+            border: 1px solid #fde047;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .footer-terms {
+            margin-top: 36px;
+            padding-top: 20px;
+            border-top: 1px dashed #cbd5e1;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+        .btn-toolbar {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .btn {
+            background: #111;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn:hover { background: #333; transform: translateY(-2px); }
+        .btn-gold { background: #b8862b; }
+        .btn-gold:hover { background: #966b1e; }
+
+        @media print {
+            body { background: #fff; padding: 0; }
+            .invoice-card { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+            .btn-toolbar { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="invoice-card">
+    <!-- Header -->
+    <div class="header">
+        <div>
+            <h1 class="logo-title">SK FASHION</h1>
+            <div class="logo-subtitle">Everything For Mens</div>
+            <div class="store-addr">
+                Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura City,<br>
+                Ahilyanagar (Ahmednagar), Maharashtra - 414001<br>
+                <strong>Phone:</strong> +91 98765 43210 &bull; <strong>WhatsApp:</strong> 919876543210
+            </div>
+        </div>
+        <div class="invoice-meta">
+            <div class="invoice-badge">RETAIL INVOICE</div>
+            <div class="meta-line">Invoice No: <strong>INV-{{ order.order_id }}</strong></div>
+            <div class="meta-line">Order Ref: <strong>#{{ order.order_id }}</strong></div>
+            <div class="meta-line">Date: <strong>{{ order.created_at|date:"d M, Y" }}</strong></div>
+            <div class="meta-line" style="margin-top:8px;">
+                {% if order.payment_status == 'COMPLETED' or order.payment_status == 'PAID' %}
+                <span class="badge-paid"><i class="fa-solid fa-check"></i> PAID VIA {{ order.get_payment_method_display|upper }}</span>
+                {% elif order.payment_status == 'COD_VERIFIED' %}
+                <span class="badge-cod"><i class="fa-solid fa-truck"></i> CASH ON DELIVERY</span>
+                {% else %}
+                <span class="badge-pending">{{ order.get_payment_status_display|upper }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer & Delivery Details -->
+    <div class="details-grid">
+        <div class="box">
+            <div class="box-title">Billed &amp; Delivered To:</div>
+            <div class="box-content">
+                <strong>{{ order.customer_name }}</strong><br>
+                Phone: {{ order.customer_phone }}<br>
+                {% if order.customer_email %}Email: {{ order.customer_email }}<br>{% endif %}
+                {% if order.delivery_type == 'STORE_PICKUP' %}
+                <span style="color:#b8862b;font-weight:700;">Showroom Pickup at Delhi Gate Showroom</span>
+                {% else %}
+                Address: {{ order.address_line }},<br>
+                {{ order.city }}, {{ order.state }} - {{ order.pincode }}
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="box">
+            <div class="box-title">Order &amp; Payment Specifications:</div>
+            <div class="box-content">
+                <strong>Delivery Type:</strong> {{ order.get_delivery_type_display }}<br>
+                <strong>Payment Mode:</strong> {{ order.get_payment_method_display }}<br>
+                <strong>Order Status:</strong> {{ order.get_order_status_display }}<br>
+                {% if order.razorpay_payment_id %}
+                <strong>Razorpay Txn:</strong> {{ order.razorpay_payment_id }}<br>
+                {% elif order.upi_transaction_id %}
+                <strong>UPI UTR No:</strong> {{ order.upi_transaction_id }}<br>
+                {% endif %}
+                {% if order.coupon_code %}
+                <strong>Voucher Code:</strong> {{ order.coupon_code }} (Discounted)<br>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Itemized Table -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width:40px;" class="text-center">#</th>
+                <th>Item &amp; Description</th>
+                <th class="text-center" style="width:80px;">Size</th>
+                <th class="text-center" style="width:60px;">Qty</th>
+                <th class="text-right" style="width:110px;">Rate (&#8377;)</th>
+                <th class="text-right" style="width:120px;">Amount (&#8377;)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                <td class="text-center" style="color:#777;">{{ forloop.counter }}</td>
+                <td>
+                    <strong>{{ item.product_name }}</strong>
+                    {% if item.product %}
+                    <div style="font-size:11px;color:#777;margin-top:2px;">SKU: {{ item.product.sku }} | {{ item.product.fit }}</div>
+                    {% endif %}
+                </td>
+                <td class="text-center"><strong>{{ item.size }}</strong></td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-right">&#8377;{{ item.price|floatformat:0 }}</td>
+                <td class="text-right font-bold">&#8377;{{ item.total_price|floatformat:0 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Totals Table -->
+    <div class="totals-section">
+        <table class="totals-table">
+            <tr>
+                <td>Subtotal</td>
+                <td class="text-right">&#8377;{{ order.subtotal|floatformat:0 }}</td>
+            </tr>
+            {% if order.discount_amount > 0 %}
+            <tr style="color:#047857;font-weight:600;">
+                <td>Coupon Discount ({{ order.coupon_code }})</td>
+                <td class="text-right">-&#8377;{{ order.discount_amount|floatformat:0 }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td>Delivery Charges</td>
+                <td class="text-right">
+                    {% if order.delivery_charge == 0 %}
+                    <span style="color:#047857;font-weight:700;">FREE</span>
+                    {% else %}
+                    &#8377;{{ order.delivery_charge }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr class="grand-row">
+                <td>Grand Total</td>
+                <td class="text-right">&#8377;{{ order.total_amount|floatformat:0 }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Terms -->
+    <div class="footer-terms">
+        <strong>Terms &amp; Conditions:</strong>
+        <ol style="margin: 6px 0 0 16px; padding: 0;">
+            <li>Goods once sold can be exchanged within 7 days at our Ahilyanagar Delhi Gate showroom with original tags and this invoice.</li>
+            <li>For any queries or alteration assistance, please message our support WhatsApp: <strong>+91 98765 43210</strong>.</li>
+            <li>This is a computer-generated retail invoice issued by SK Fashion, Sarjepura, Ahilyanagar.</li>
+        </ol>
+    </div>
+</div>
+
+<!-- Floating Action Buttons -->
+<div class="btn-toolbar">
+    <button onclick="window.print()" class="btn btn-gold">
+        <i class="fa-solid fa-print"></i> Print Invoice / Save PDF
+    </button>
+    <a href="{% url 'order_success' order_id=order.order_id %}" class="btn">
+        <i class="fa-solid fa-arrow-left"></i> Back to Order
+    </a>
+</div>
+
+</body>
+</html>

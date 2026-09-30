@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% block title %}My Account & Orders | SK Fashion Ahilyanagar{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+    <!-- Top Account Banner -->
+    <div class="bg-white rounded-3xl border border-brand-border p-6 sm:p-8 shadow-sm mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 rounded-2xl bg-brand-dark text-brand-gold flex items-center justify-center font-display font-black text-2xl shadow-md shrink-0">
+                    {{ user.first_name|default:user.username|slice:":1"|upper }}
+                </div>
+                <div>
+                    <div class="section-label mb-0.5">Customer Portal</div>
+                    <h1 class="font-display font-bold text-brand-dark text-xl sm:text-2xl">
+                        {{ user.get_full_name|default:user.username }}
+                    </h1>
+                    <div class="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
+                        {% if profile.phone %}
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-phone text-brand-gold"></i> +91 {{ profile.phone }}</span>
+                        {% endif %}
+                        {% if user.email %}
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-envelope text-brand-gold"></i> {{ user.email }}</span>
+                        {% endif %}
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar text-gray-400"></i> Member since {{ user.date_joined|date:"M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 self-start sm:self-auto">
+                <a href="{% url 'wishlist_view' %}" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-heart text-red-500"></i>
+                    <span>Wishlist ({{ wishlist_count }})</span>
+                </a>
+                <a href="{% url 'customer_logout' %}" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold text-gray-500 hover:text-red-600 hover:border-red-300 transition-colors flex items-center gap-1.5">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sign Out</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Metrics summary -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-brand-border">
+            <div class="p-4 rounded-2xl bg-brand-surface border border-brand-border">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Orders</div>
+                <div class="font-display font-black text-brand-dark text-2xl mt-1">{{ orders_count }}</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-brand-surface border border-brand-border">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Spent</div>
+                <div class="font-display font-black text-brand-dark text-2xl mt-1">&#8377;{{ total_spent|floatformat:0 }}</div>
+            </div>
+            <div class="p-4 rounded-2xl bg-brand-surface border border-brand-border col-span-2 sm:col-span-1">
+                <div class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Saved Items</div>
+                <div class="font-display font-black text-brand-dark text-2xl mt-1">{{ wishlist_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert messages -->
+    {% if messages %}
+    <div class="space-y-3 mb-8">
+        {% for message in messages %}
+        <div class="p-4 rounded-2xl text-xs font-semibold flex items-center justify-between {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-red-500{% else %}fa-circle-check text-green-500{% endif %} text-sm"></i>
+                <span>{{ message }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content Tabs -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left: Orders List (Col 8) -->
+        <div class="lg:col-span-8 space-y-6">
+            <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                <h2 class="font-display font-bold text-brand-dark text-lg sm:text-xl flex items-center gap-2">
+                    <i class="fa-solid fa-box-open text-brand-gold"></i>
+                    <span>Order History</span>
+                </h2>
+                <a href="{% url 'product_list' %}" class="text-xs font-bold text-brand-gold hover:underline">
+                    Shop New Fits &rarr;
+                </a>
+            </div>
+
+            {% if orders %}
+            <div class="space-y-5">
+                {% for order in orders %}
+                <div class="bg-white rounded-3xl border border-brand-border shadow-sm p-5 sm:p-6 space-y-4 hover:border-brand-gold transition-colors">
+                    
+                    <!-- Order Header -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-brand-border text-xs">
+                        <div>
+                            <span class="font-mono font-bold text-brand-dark text-sm sm:text-base">#{{ order.order_id }}</span>
+                            <span class="text-gray-400 block sm:inline sm:ml-2 text-[11px]">&bull; {{ order.created_at|date:"d M Y, h:i A" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Order Status Pill -->
+                            {% if order.order_status == 'DELIVERED' %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-green-50 text-green-700 border border-green-200">
+                                <i class="fa-solid fa-circle-check"></i> Delivered
+                            </span>
+                            {% elif order.order_status == 'CANCELLED' %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-red-50 text-red-700 border border-red-200">
+                                <i class="fa-solid fa-circle-xmark"></i> Cancelled
+                            </span>
+                            {% elif order.order_status == 'SHIPPED' or order.order_status == 'OUT_FOR_DELIVERY' %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                <i class="fa-solid fa-truck-fast"></i> In Transit
+                            </span>
+                            {% elif order.order_status == 'READY_FOR_PICKUP' %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                <i class="fa-solid fa-store"></i> Ready for Pickup
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                <i class="fa-solid fa-clock"></i> {{ order.get_order_status_display }}
+                            </span>
+                            {% endif %}
+
+                            <!-- Payment Status -->
+                            {% if order.payment_status == 'COMPLETED' %}
+                            <span class="text-[10px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-md border border-green-200">Paid</span>
+                            {% elif order.payment_status == 'COD_VERIFIED' %}
+                            <span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200">COD</span>
+                            {% else %}
+                            <span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-md">{{ order.get_payment_method_display }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Items Loop -->
+                    <div class="divide-y divide-brand-border">
+                        {% for item in order.items.all %}
+                        <div class="py-3 flex items-center gap-4">
+                            <div class="w-14 h-16 rounded-xl overflow-hidden bg-brand-surface border border-brand-border shrink-0">
+                                {% if item.product and item.product.main_image %}
+                                <img src="{{ item.product.main_image }}" alt="{{ item.product_name }}" class="w-full h-full object-cover object-top">
+                                {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm"><i class="fa-solid fa-shirt"></i></div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0 text-xs">
+                                {% if item.product %}
+                                <a href="{% url 'product_detail' slug=item.product.slug %}" class="font-bold text-brand-dark hover:text-brand-gold transition-colors truncate block">
+                                    {{ item.product_name }}
+                                </a>
+                                {% else %}
+                                <span class="font-bold text-brand-dark truncate block">{{ item.product_name }}</span>
+                                {% endif %}
+                                <div class="text-gray-500 text-[11px] mt-0.5">
+                                    Size: <strong class="text-brand-dark">{{ item.size }}</strong> &bull; Qty: {{ item.quantity }}
+                                </div>
+                            </div>
+                            <div class="text-right text-xs shrink-0">
+                                <div class="font-bold text-brand-dark">&#8377;{{ item.total_price|floatformat:0 }}</div>
+                                <div class="text-[10px] text-gray-400">&#8377;{{ item.price }} each</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Order Total & Delivery Summary -->
+                    <div class="bg-brand-surface rounded-2xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <div class="text-gray-600 space-y-0.5">
+                            <div><i class="fa-solid fa-location-dot text-brand-gold mr-1.5"></i> <strong>Deliver to:</strong> {{ order.customer_name }}</div>
+                            <div class="text-[11px] text-gray-500 pl-5">{{ order.address_line }}, {{ order.city }} - {{ order.pincode }}</div>
+                        </div>
+                        <div class="sm:text-right shrink-0">
+                            <div class="text-[11px] text-gray-400">Total Amount</div>
+                            <div class="font-display font-black text-brand-dark text-lg">&#8377;{{ order.total_amount|floatformat:0 }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'order_invoice' order_id=order.order_id %}" target="_blank"
+                               class="btn-outline px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:border-brand-gold">
+                                <i class="fa-solid fa-file-invoice text-brand-gold"></i>
+                                <span>Tax Invoice</span>
+                            </a>
+                            <a href="{% url 'track_order' %}?order_query={{ order.order_id }}"
+                               class="btn-outline px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 hover:border-brand-gold">
+                                <i class="fa-solid fa-route text-blue-600"></i>
+                                <span>Track Order</span>
+                            </a>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'reorder_items' order_id=order.order_id %}"
+                               class="btn-dark px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-rotate-right"></i>
+                                <span>Order Again</span>
+                            </a>
+                            <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20have%20an%20enquiry%20regarding%20Order%20%23{{ order.order_id }}."
+                               target="_blank" class="btn-wa px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm"></i>
+                                <span>Support</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <!-- No Orders State -->
+            <div class="bg-white rounded-3xl border border-brand-border p-12 text-center space-y-4 shadow-sm">
+                <div class="w-16 h-16 rounded-full bg-brand-surface text-gray-400 flex items-center justify-center mx-auto text-2xl">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                </div>
+                <h3 class="font-bold text-brand-dark text-base">No orders placed yet</h3>
+                <p class="text-xs text-gray-500 max-w-sm mx-auto">Explore our premium collection of shirts, denim, kurtas, and athletic wear.</p>
+                <a href="{% url 'product_list' %}" class="btn-gold inline-flex px-6 py-2.5 rounded-xl text-xs font-bold shadow-md">
+                    Start Shopping
+                </a>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Right: Profile & Saved Delivery Address (Col 4) -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white rounded-3xl border border-brand-border shadow-sm p-6 space-y-5">
+                <div class="pb-3 border-b border-brand-border">
+                    <h2 class="font-display font-bold text-brand-dark text-base flex items-center gap-2">
+                        <i class="fa-solid fa-address-book text-brand-gold"></i>
+                        <span>Saved Address & Profile</span>
+                    </h2>
+                    <p class="text-[11px] text-gray-400 mt-1">Used to automatically fill checkout details.</p>
+                </div>
+
+                <form method="POST" action="{% url 'customer_account' %}" class="space-y-4 text-xs">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_profile">
+
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Full Name</label>
+                        <input type="text" name="full_name" value="{{ user.get_full_name|default:user.username }}" required
+                               class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">WhatsApp / Phone Number</label>
+                        <input type="tel" name="phone" value="{{ profile.phone|default:'' }}" maxlength="10" placeholder="9876543210"
+                               class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Email Address</label>
+                        <input type="email" name="email" value="{{ user.email|default:'' }}" placeholder="name@example.com"
+                               class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">Default Delivery Address</label>
+                        <textarea name="address_line" rows="2.5" placeholder="Flat/House no, building, street, landmark"
+                                  class="inp w-full text-xs px-3.5 py-2 rounded-xl border border-brand-border bg-white resize-none transition-all">{{ profile.address_line|default:'' }}</textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">City / Town</label>
+                            <input type="text" name="city" value="{{ profile.city|default:'Ahilyanagar' }}"
+                                   class="inp w-full text-xs px-3 py-2 rounded-xl border border-brand-border bg-white transition-all">
+                        </div>
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">Pincode</label>
+                            <input type="text" name="pincode" value="{{ profile.pincode|default:'414001' }}" maxlength="6"
+                                   class="inp w-full text-xs px-3 py-2 rounded-xl border border-brand-border bg-white transition-all">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">State</label>
+                        <input type="text" name="state" value="{{ profile.state|default:'Maharashtra' }}"
+                               class="inp w-full text-xs px-3.5 py-2 rounded-xl border border-brand-border bg-white transition-all">
+                    </div>
+
+                    <button type="submit" class="btn-dark w-full py-3 rounded-xl text-xs font-bold shadow-md cursor-pointer mt-2">
+                        Save Address & Profile
+                    </button>
+                </form>
+            </div>
+
+            <!-- Direct Store Assistance Box -->
+            <div class="bg-gradient-to-br from-brand-dark to-black rounded-3xl p-6 text-white space-y-4 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-brand-gold/20 flex items-center justify-center text-brand-gold text-lg">
+                        <i class="fa-solid fa-headset"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-sm">Need Help with an Order?</div>
+                        <div class="text-[11px] text-gray-400">Direct VIP concierge support</div>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-300 leading-relaxed">
+                    Have questions about tailoring, sizes, or exchange? Reach our Ahilyanagar Delhi Gate showroom staff directly on WhatsApp.
+                </p>
+                <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="btn-wa w-full py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                    <span>Chat on WhatsApp</span>
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

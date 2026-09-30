@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}SK Fashion - Everything For Mens | Ahilyanagar's Top Menswear{% endblock %}
+{% block content %}
+
+<!-- HERO -->
+<section class="relative overflow-hidden" style="background:linear-gradient(135deg,#0d0d0d 0%,#1a1400 40%,#0d0d0d 100%);min-height:560px;">
+    <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 60% 50% at 80% 50%,rgba(184,134,43,.12) 0%,transparent 70%);"></div>
+    <div class="absolute inset-0 pointer-events-none opacity-10" style="background-image:radial-gradient(circle,#b8862b 1px,transparent 1px);background-size:32px 32px;"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div class="text-center lg:text-left space-y-7">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border" style="background:rgba(184,134,43,.1);border-color:rgba(184,134,43,.3);">
+                    <i class="fa-solid fa-crown" style="color:#d4a843;font-size:10px;"></i>
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#d4a843;">Ahilyanagar's Exclusive Menswear Hub</span>
+                </div>
+                <h1 class="font-display text-white leading-tight" style="font-size:clamp(2rem,5vw,3.5rem);font-weight:800;">
+                    Upgrade Your Look<br>With <span style="background:linear-gradient(135deg,#d4a843,#f0c870,#b8862b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Premium Menswear</span>
+                </h1>
+                <p class="text-gray-300 leading-relaxed max-w-xl mx-auto lg:mx-0" style="font-size:15px;">
+                    Explore high-grade formal shirts, casual linen, stretch denim, and festival kurtas. Visit our showroom at <strong class="text-white">Delhi Gate, Sarjepura</strong> or order online.
+                </p>
+                <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
+                    <a href="{% url 'product_list' %}" class="btn-gold w-full sm:w-auto px-8 py-3.5 rounded-xl text-sm shadow-lg"><span>Explore Collection</span><i class="fa-solid fa-arrow-right text-xs"></i></a>
+                    <a href="{% url 'store_locator' %}" class="btn-outline w-full sm:w-auto px-6 py-3.5 rounded-xl text-sm" style="color:#fff;border-color:rgba(255,255,255,.2);">
+                        <i class="fa-solid fa-location-dot" style="color:#d4a843;"></i><span>Showroom Directions</span>
+                    </a>
+                </div>
+                <div class="grid grid-cols-3 gap-4 pt-6 border-t" style="border-color:rgba(255,255,255,.08);">
+                    <div><div class="font-display font-bold" style="font-size:1.5rem;color:#d4a843;">100%</div><div class="text-gray-400 mt-0.5" style="font-size:11px;">Fine Grade Cotton</div></div>
+                    <div><div class="text-white font-display font-bold" style="font-size:1.5rem;">4.8 &#9733;</div><div class="text-gray-400 mt-0.5" style="font-size:11px;">Customer Rating</div></div>
+                    <div><div class="font-display font-bold" style="font-size:1.5rem;color:#d4a843;">Delhi Gate</div><div class="text-gray-400 mt-0.5" style="font-size:11px;">City Landmark</div></div>
+                </div>
+            </div>
+            <div class="flex justify-center">
+                <div class="relative w-full max-w-sm sm:max-w-md">
+                    <div class="absolute -inset-2 rounded-3xl blur-3xl opacity-25" style="background:linear-gradient(135deg,#b8862b,#d4a843);"></div>
+                    <div class="relative rounded-2xl overflow-hidden border shadow-2xl" style="border-color:rgba(255,255,255,.08);aspect-ratio:3/4;">
+                        <img src="{% if banners %}{{ banners.first.banner_image }}{% else %}https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80{% endif %}" alt="SK Fashion" class="w-full h-full object-cover object-top hover:scale-105 transition duration-700">
+                        <div class="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between gap-3" style="background:linear-gradient(to top,rgba(0,0,0,.9) 0%,transparent 100%);padding-top:40px;">
+                            <div>
+                                <span class="block font-bold" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#d4a843;">{% if banners %}{{ banners.first.badge }}{% else %}Festive &amp; Wedding Range{% endif %}</span>
+                                <span class="block text-white font-bold" style="font-size:14px;">{% if banners %}{{ banners.first.title }}{% else %}Designer Suits &amp; Kurtas{% endif %}</span>
+                                <span class="block text-gray-400" style="font-size:11px;">Starting from &#8377;499</span>
+                            </div>
+                            <a href="{% if banners %}{{ banners.first.button_link }}{% else %}{% url 'product_list' %}{% endif %}" class="btn-gold px-4 py-2.5 rounded-xl text-xs flex-shrink-0">View &#8594;</a>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TRUST BAR -->
+<section class="bg-white border-b border-brand-border py-7">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fdf3e3;"><i class="fa-solid fa-truck-fast" style="color:#b8862b;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Pan-India Delivery</div><div class="text-xs text-gray-500">Same-day in Ahilyanagar</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#f0fdf4;"><i class="fa-brands fa-whatsapp" style="color:#25D366;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">1-Tap WhatsApp Order</div><div class="text-xs text-gray-500">Order in 60 seconds</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;"><i class="fa-solid fa-store" style="color:#3b82f6;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Physical Showroom</div><div class="text-xs text-gray-500">Delhi Gate, Sarjepura</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#faf5ff;"><i class="fa-solid fa-hand-holding-dollar" style="color:#9333ea;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Cash On Delivery</div><div class="text-xs text-gray-500">Pay when it arrives</div></div></div>
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="py-16 bg-brand-surface">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-10">
+            <div><div class="section-label mb-2">Everything For Mens</div><h2 class="font-display font-bold text-brand-dark" style="font-size:clamp(1.5rem,3vw,2rem);">Shop By Category</h2><div class="gold-line mt-3"></div></div>
+            <a href="{% url 'product_list' %}" class="btn-outline px-5 py-2.5 rounded-xl text-sm">View Full Catalog <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {% for cat in categories %}
+            <a href="{% url 'product_list' %}?category={{ cat.slug }}" class="cat-card group bg-white rounded-2xl p-5 border border-brand-border text-center flex flex-col items-center gap-3">
+                <div class="w-16 h-16 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300" style="background:#fdf3e3;">
+                    <i class="fa-solid fa-{{ cat.icon|default:'shirt' }}" style="color:#b8862b;font-size:26px;"></i>
+                </div>
+                <div><div class="font-bold text-brand-dark text-sm group-hover:text-brand-gold transition-colors">{{ cat.name }}</div><div class="text-gray-400 mt-0.5" style="font-size:10px;">Explore &#8594;</div></div>
+            </a>
+            {% empty %}<div class="col-span-full text-center text-gray-400 py-10">Categories loading...</div>{% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- FEATURED PRODUCTS -->
+<section class="py-16 bg-white border-t border-brand-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 mb-10">
+            <div><div class="section-label mb-2">Handpicked Collection</div><h2 class="font-display font-bold text-brand-dark" style="font-size:clamp(1.5rem,3vw,2rem);">Trending In Ahilyanagar</h2><div class="gold-line mt-3"></div></div>
+            <a href="{% url 'product_list' %}" class="btn-outline px-5 py-2.5 rounded-xl text-sm">Browse All <i class="fa-solid fa-arrow-right text-xs"></i></a>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {% for product in featured_products %}
+            <div class="product-card flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio:3/4;background:#f7f5f2;">
+                    <a href="{% url 'product_detail' slug=product.slug %}"><img src="{{ product.main_image }}" alt="{{ product.name }}" class="card-img w-full h-full object-cover object-top"></a>
+                    {% if product.discount_percentage > 0 %}<span class="badge-off">{{ product.discount_percentage }}% OFF</span>{% endif %}
+                    <button type="button" 
+                            onclick="toggleWishlist(event, {{ product.id }})" 
+                            data-product-id="{{ product.id }}"
+                            class="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm shadow flex items-center justify-center transition-all hover:scale-110 z-10 {% if product.id in wishlist_ids %}text-red-500{% else %}text-gray-400 hover:text-red-500{% endif %}"
+                            title="Save to Wishlist">
+                        <i class="{% if product.id in wishlist_ids %}fa-solid{% else %}fa-regular{% endif %} fa-heart text-sm"></i>
+                    </button>
+                    <span class="badge-fit" style="top:auto;bottom:10px;right:10px;">{{ product.fit }}</span>
+                </div>
+                <div class="p-4 flex flex-col flex-grow">
+                    <span class="section-label mb-1" style="font-size:9px;">{{ product.category.name }}</span>
+                    <a href="{% url 'product_detail' slug=product.slug %}" class="font-bold text-brand-dark hover:text-brand-gold transition-colors line-clamp-1" style="font-size:14px;">{{ product.name }}</a>
+                    <p class="text-gray-400 mt-0.5 line-clamp-1" style="font-size:11px;">{{ product.fabric }}</p>
+                    <div class="mt-auto pt-4">
+                        <div class="flex items-baseline gap-2 mb-3">
+                            <span class="font-extrabold text-brand-dark" style="font-size:17px;">&#8377;{{ product.discount_price }}</span>
+                            {% if product.price > product.discount_price %}<span class="line-through text-gray-400" style="font-size:12px;">&#8377;{{ product.price }}</span>{% endif %}
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <a href="{% url 'product_detail' slug=product.slug %}" class="btn-dark text-xs py-2 px-3 rounded-xl">Select Size</a>
+                            <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20want%20{{ product.name|urlencode }}%20(%E2%82%B9{{ product.discount_price }})." target="_blank" class="btn-wa text-xs py-2 px-3 rounded-xl"><i class="fa-brands fa-whatsapp" style="font-size:13px;"></i> Order</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}<div class="col-span-full text-center text-gray-400 py-16"><i class="fa-solid fa-shirt text-5xl mb-4 block" style="color:#e5e0d8;"></i>No products yet.</div>{% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- SHOWROOM SPOTLIGHT -->
+<section class="py-16 relative overflow-hidden" style="background:linear-gradient(135deg,#0d0d0d 0%,#1a1a0a 100%);">
+    <div class="absolute inset-0 pointer-events-none" style="background:radial-gradient(ellipse 50% 60% at 20% 50%,rgba(184,134,43,.10) 0%,transparent 70%);"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            <div class="space-y-6">
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border" style="background:rgba(184,134,43,.1);border-color:rgba(184,134,43,.3);">
+                    <i class="fa-solid fa-map-pin" style="color:#d4a843;font-size:10px;"></i>
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#d4a843;">Direct Showroom</span>
+                </div>
+                <h2 class="font-display text-white font-bold" style="font-size:clamp(1.6rem,3.5vw,2.4rem);">Visit Our Ahilyanagar Store</h2>
+                <p class="text-gray-300 leading-relaxed" style="font-size:14px;">Experience premium fabrics, perfect fits, and personal styling advice at our flagship outlet.</p>
+                <div class="rounded-2xl p-5 border space-y-4" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);">
+                    <div class="flex items-start gap-3"><i class="fa-solid fa-location-dot mt-0.5 flex-shrink-0" style="color:#d4a843;font-size:14px;"></i><div><strong class="block text-white font-bold" style="font-size:14px;">SK Fashion</strong><p class="text-gray-400 mt-0.5" style="font-size:12px;">Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura city, Ahilyanagar (Ahmednagar), Maharashtra 414001</p></div></div>
+                    <div class="flex items-center gap-3 text-gray-400 pt-3 border-t" style="border-color:rgba(255,255,255,.08);font-size:12px;"><i class="fa-regular fa-clock" style="color:#d4a843;"></i><span>Open 7 Days: 10:00 AM &ndash; 10:00 PM</span></div>
+                    <div class="flex items-center gap-3 text-gray-400" style="font-size:12px;"><i class="fa-solid fa-phone" style="color:#d4a843;font-size:11px;"></i><a href="tel:{{ store_settings.PHONE }}" class="hover:text-brand-gold2 transition-colors font-bold" style="color:#d4a843;">{{ store_settings.PHONE }}</a></div>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="https://maps.google.com/?q=Delhi+Gate+Sarjepura+Ahmednagar" target="_blank" class="btn-gold px-6 py-3 rounded-xl text-sm"><i class="fa-solid fa-diamond-turn-right"></i> Open Google Maps</a>
+                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="btn-wa px-6 py-3 rounded-xl text-sm"><i class="fa-brands fa-whatsapp" style="font-size:15px;"></i> Chat on WhatsApp</a>
+                </div>
+            </div>
+            <div class="rounded-2xl overflow-hidden border shadow-2xl" style="aspect-ratio:16/10;border-color:rgba(255,255,255,.1);background:#1a1a1a;">
+                <iframe src="{{ store_settings.MAP_EMBED_URL }}" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="py-16 bg-brand-surface border-t border-brand-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-lg mx-auto mb-12">
+            <div class="section-label mb-2">Customer Love</div>
+            <h2 class="font-display font-bold text-brand-dark" style="font-size:clamp(1.5rem,3vw,2rem);">What Ahilyanagar Says</h2>
+            <div class="gold-line mt-3 mx-auto"></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for review in reviews %}
+            <div class="bg-white rounded-2xl p-6 border border-brand-border shadow-sm flex flex-col">
+                <div>
+                    <div class="flex items-center gap-1 mb-4" style="color:#d4a843;">{% for i in "12345" %}<i class="fa-solid fa-star" style="font-size:13px;"></i>{% endfor %}</div>
+                    <p class="text-gray-600 leading-relaxed italic" style="font-size:14px;">"{{ review.comment }}"</p>
+                </div>
+                <div class="mt-5 pt-4 border-t border-brand-border flex items-center justify-between">
+                    <div><div class="font-bold text-brand-dark" style="font-size:13px;">{{ review.customer_name }}</div><div class="text-gray-400" style="font-size:11px;">{{ review.city }}</div></div>
+                    <span class="flex items-center gap-1 text-green-700 bg-green-50 px-2.5 py-1 rounded-full font-semibold" style="font-size:10px;"><i class="fa-solid fa-check" style="font-size:8px;"></i> Verified</span>
+                </div>
+            </div>
+            {% empty %}<div class="col-span-full text-center text-gray-400 py-10">Reviews will appear here.</div>{% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

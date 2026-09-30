@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Create Account | SK Fashion Ahilyanagar{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto px-4 py-12 sm:py-16">
+    <div class="bg-white rounded-3xl border border-brand-border shadow-lg p-6 sm:p-8 space-y-6">
+        
+        <!-- Header -->
+        <div class="text-center space-y-2">
+            <div class="w-12 h-12 rounded-2xl bg-brand-surface border border-brand-border flex items-center justify-center mx-auto text-brand-gold text-xl shadow-sm">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <h1 class="font-display font-bold text-brand-dark text-2xl">Create Your Account</h1>
+            <p class="text-xs text-gray-500">Track shipments, download tax invoices, and enjoy seamless one-click checkout.</p>
+        </div>
+
+        <!-- Alert messages -->
+        {% if messages %}
+        <div class="space-y-2.5">
+            {% for message in messages %}
+            <div class="p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-green-50 text-green-800 border border-green-200{% endif %}">
+                <i class="fa-solid {% if message.tags == 'error' %}fa-circle-exclamation text-red-500{% else %}fa-circle-check text-green-500{% endif %} text-sm shrink-0"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Register Form -->
+        <form method="POST" action="{% url 'customer_register' %}" class="space-y-4 text-xs">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1.5">Full Name *</label>
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-3.5 top-3 text-gray-400"></i>
+                    <input type="text" name="full_name" value="{{ full_name|default:'' }}" required placeholder="e.g. Mahesh Patil"
+                           class="inp w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1.5">WhatsApp / Mobile Number *</label>
+                <div class="relative">
+                    <span class="absolute left-3.5 top-2.5 text-xs font-bold text-gray-400">+91</span>
+                    <input type="tel" name="phone" value="{{ phone|default:'' }}" required maxlength="10" placeholder="9876543210"
+                           class="inp w-full pl-12 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
+                </div>
+                <p class="text-[10px] text-gray-400 mt-1">Previous orders with this number will automatically appear in your account.</p>
+            </div>
+
+            <div>
+                <label class="block font-bold text-gray-700 mb-1.5">Email Address (Optional — for tax invoice)</label>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-3.5 top-3 text-gray-400"></i>
+                    <input type="email" name="email" value="{{ email|default:'' }}" placeholder="name@example.com"
+                           class="inp w-full pl-10 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1.5">Password *</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-lock absolute left-3.5 top-3 text-gray-400"></i>
+                        <input type="password" name="password" required minlength="6" placeholder="Min. 6 chars"
+                               class="inp w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
+                    </div>
+                </div>
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1.5">Confirm Password *</label>
+                    <div class="relative">
+                        <i class="fa-solid fa-shield-check absolute left-3.5 top-3 text-gray-400"></i>
+                        <input type="password" name="confirm_password" required minlength="6" placeholder="Re-enter password"
+                               class="inp w-full pl-10 pr-3 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-gold w-full py-3.5 rounded-xl text-xs font-bold shadow-md cursor-pointer mt-2 flex items-center justify-center gap-2">
+                <span>Create My Account</span>
+                <i class="fa-solid fa-arrow-right text-[11px]"></i>
+            </button>
+        </form>
+
+        <div class="text-center pt-2 border-t border-brand-border">
+            <span class="text-gray-500 text-xs">Already have an account? </span>
+            <a href="{% url 'customer_login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" class="text-xs font-bold text-brand-dark hover:text-brand-gold underline underline-offset-2 transition-colors">
+                Sign In here
+            </a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

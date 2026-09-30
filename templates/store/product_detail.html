@@ -1,0 +1,581 @@
+{% extends 'base.html' %}
+{% block title %}{{ product.name }} | SK Fashion{% endblock %}
+{% block content %}
+
+<div class="bg-white border-b border-brand-border py-3">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center gap-2 text-xs text-gray-400">
+            <a href="{% url 'home' %}" class="hover:text-brand-gold transition-colors">Home</a>
+            <i class="fa-solid fa-chevron-right" style="font-size:8px;"></i>
+            <a href="{% url 'product_list' %}?category={{ product.category.slug }}" class="hover:text-brand-gold transition-colors">{{ product.category.name }}</a>
+            <i class="fa-solid fa-chevron-right" style="font-size:8px;"></i>
+            <span class="text-brand-dark font-semibold truncate max-w-xs">{{ product.name }}</span>
+        </nav>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16">
+
+        <!-- IMAGES -->
+        <div class="lg:col-span-7 space-y-4">
+            <div class="rounded-2xl overflow-hidden border border-brand-border relative shadow-sm" style="aspect-ratio:3/4;background:#f7f5f2;">
+                <img id="mainProductImage" src="{{ product.main_image }}" alt="{{ product.name }}" class="w-full h-full object-cover object-top">
+                {% if product.discount_percentage > 0 %}<span class="badge-off" style="font-size:11px;padding:4px 10px;">{{ product.discount_percentage }}% OFF</span>{% endif %}
+                <span class="badge-fit" style="font-size:10px;padding:4px 10px;">{{ product.fit }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button type="button" onclick="switchImg('{{ product.main_image }}')" class="w-20 h-24 rounded-xl overflow-hidden border-2 border-brand-gold shadow-sm focus:outline-none">
+                    <img src="{{ product.main_image }}" alt="" class="w-full h-full object-cover object-top">
+                </button>
+                {% if product.image_2_url %}
+                <button type="button" onclick="switchImg('{{ product.image_2_url }}')" class="w-20 h-24 rounded-xl overflow-hidden border border-brand-border hover:border-brand-gold focus:outline-none transition-colors">
+                    <img src="{{ product.image_2_url }}" alt="" class="w-full h-full object-cover object-top">
+                </button>
+                {% endif %}
+                {% if product.image_3_url %}
+                <button type="button" onclick="switchImg('{{ product.image_3_url }}')" class="w-20 h-24 rounded-xl overflow-hidden border border-brand-border hover:border-brand-gold focus:outline-none transition-colors">
+                    <img src="{{ product.image_3_url }}" alt="" class="w-full h-full object-cover object-top">
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- PURCHASE OPTIONS -->
+        <div class="lg:col-span-5 space-y-7">
+            <div>
+                <span class="section-label">{{ product.category.name }}</span>
+                <h1 class="font-display font-bold text-brand-dark mt-2 leading-tight" style="font-size:clamp(1.4rem,2.5vw,1.9rem);">{{ product.name }}</h1>
+                <div class="flex items-center gap-3 mt-2">
+                    <a href="#reviewsSection" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold hover:scale-105 transition-transform" style="background:#fdf3e3;color:#7a4f1e;border:1px solid rgba(184,134,43,.25);">
+                        <span id="topRatingAvg">{{ product.rating }}</span> <i class="fa-solid fa-star" style="color:#d4a843;font-size:10px;"></i>
+                    </a>
+                    <a href="#reviewsSection" class="text-gray-500 hover:text-brand-gold text-xs underline underline-offset-2 transition-colors">
+                        (<span id="topReviewsCount">{{ product.reviews_count }}</span> verified reviews)
+                    </a>
+                    <span class="text-gray-300 text-xs">|</span>
+                    <span class="text-gray-400 text-xs font-mono">SKU: {{ product.sku }}</span>
+                </div>
+            </div>
+
+            <!-- Price -->
+            <div class="rounded-2xl p-5 border border-brand-border" style="background:#faf8f5;">
+                <div class="flex items-baseline gap-3">
+                    <span class="font-display font-black text-brand-dark" style="font-size:2rem;">&#8377;{{ product.discount_price }}</span>
+                    {% if product.price > product.discount_price %}
+                    <span class="line-through text-gray-400" style="font-size:15px;">MRP &#8377;{{ product.price }}</span>
+                    <span class="text-xs font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-lg border border-green-100">{{ product.discount_percentage }}% off</span>
+                    {% endif %}
+                </div>
+                <p class="text-gray-400 mt-1" style="font-size:11px;">Incl. all taxes. Free shipping above &#8377;999.</p>
+            </div>
+
+            <!-- Size Selector -->
+            <form action="{% url 'add_to_cart' %}" method="POST" id="addToCartForm" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="quantity" value="1">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="font-bold text-xs uppercase tracking-widest text-brand-dark">Select Size:</label>
+                        <button type="button" onclick="document.getElementById('sizeModal').classList.remove('hidden')" class="flex items-center gap-1.5 text-xs font-bold hover:text-brand-dark transition-colors" style="color:#b8862b;">
+                            <i class="fa-solid fa-ruler-horizontal" style="font-size:11px;"></i> Size Guide
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2.5">
+                        {% for variant in variants %}
+                        <label class="cursor-pointer">
+                            <input type="radio" name="size" value="{{ variant.size }}" class="peer sr-only" {% if forloop.first %}checked{% endif %}>
+                            <div class="px-4 py-2.5 rounded-xl border-2 font-bold text-sm transition-all border-brand-border bg-white text-gray-700 peer-checked:border-brand-dark peer-checked:bg-brand-dark peer-checked:text-white hover:border-brand-gold" style="min-width:52px;text-align:center;">{{ variant.size }}</div>
+                        </label>
+                        {% empty %}
+                        <label class="cursor-pointer"><input type="radio" name="size" value="M" class="peer sr-only" checked><div class="px-4 py-2.5 rounded-xl border-2 font-bold text-sm peer-checked:border-brand-dark peer-checked:bg-brand-dark peer-checked:text-white border-brand-border">Standard</div></label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex gap-3">
+                        <button type="submit" class="btn-dark flex-1 py-4 rounded-xl text-sm shadow-lg flex items-center justify-center gap-2"><i class="fa-solid fa-bag-shopping"></i><span>Add To Bag</span></button>
+                        <button type="button" 
+                                onclick="toggleWishlist(event, {{ product.id }})" 
+                                data-product-id="{{ product.id }}"
+                                class="px-5 py-4 rounded-xl border-2 border-brand-border bg-white transition-all hover:border-brand-gold flex items-center justify-center gap-2 {% if product.id in wishlist_ids %}text-red-500 border-red-200 bg-red-50/50{% else %}text-gray-700 hover:text-red-500{% endif %}" 
+                                title="Wishlist">
+                            <i class="{% if product.id in wishlist_ids %}fa-solid{% else %}fa-regular{% endif %} fa-heart text-base"></i>
+                            <span class="wishlist-text-label text-xs font-bold hidden sm:inline">{% if product.id in wishlist_ids %}Saved{% else %}Save{% endif %}</span>
+                        </button>
+                    </div>
+                    <a href="{{ whatsapp_url }}" target="_blank" class="btn-wa w-full py-4 rounded-xl text-sm flex items-center justify-center gap-2" style="box-shadow:0 8px 24px rgba(37,211,102,.25);"><i class="fa-brands fa-whatsapp" style="font-size:18px;"></i><span>Order Instantly on WhatsApp</span></a>
+                </div>
+            </form>
+
+            <!-- Pincode Check -->
+            <div class="rounded-2xl p-5 border border-brand-border bg-white space-y-3">
+                <span class="flex items-center gap-2 font-bold text-sm text-brand-dark"><i class="fa-solid fa-truck-ramp-box" style="color:#b8862b;"></i> Check Delivery to Your Area</span>
+                <div class="flex gap-2">
+                    <input type="text" id="pincodeInput" placeholder="Enter 6-digit Pincode (e.g. 414001)" maxlength="6"
+                           class="flex-1 text-xs px-4 py-2.5 border border-brand-border rounded-xl transition-all" style="font-size:13px;"
+                           onfocus="this.style.borderColor='#b8862b'" onblur="this.style.borderColor=''">
+                    <button type="button" onclick="checkPincode()" class="btn-dark text-xs px-5 py-2.5 rounded-xl">Check</button>
+                </div>
+                <div id="pincodeResult" class="text-xs font-semibold hidden"></div>
+            </div>
+
+            <!-- Garment Details -->
+            <div class="border-t border-brand-border pt-6 space-y-4">
+                <h3 class="font-bold text-xs uppercase tracking-widest text-brand-dark">Garment Details</h3>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="p-3.5 rounded-xl border border-brand-border bg-brand-surface"><span class="text-gray-400 text-xs block mb-1">Fabric</span><strong class="text-brand-dark">{{ product.fabric }}</strong></div>
+                    <div class="p-3.5 rounded-xl border border-brand-border bg-brand-surface"><span class="text-gray-400 text-xs block mb-1">Fit &amp; Cut</span><strong class="text-brand-dark">{{ product.fit }}</strong></div>
+                </div>
+                <div class="text-sm text-gray-600 leading-relaxed">{{ product.description|linebreaksbr }}</div>
+            </div>
+
+            <!-- Store Pickup -->
+            <div class="rounded-2xl p-4 border flex items-start gap-3" style="background:#fdf3e3;border-color:rgba(184,134,43,.25);">
+                <i class="fa-solid fa-store mt-0.5" style="color:#b8862b;font-size:18px;flex-shrink:0;"></i>
+                <div class="text-sm"><strong class="block font-bold text-brand-dark mb-0.5">Showroom Trial &amp; Pickup Available</strong><p class="text-gray-600 text-xs leading-relaxed">Visit: <strong>Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura, Ahilyanagar</strong></p></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER REVIEWS & RATINGS SECTION -->
+    <div id="reviewsSection" class="mt-16 pt-12 border-t border-brand-border space-y-8">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+                <div class="section-label mb-2">Verified Customer Feedback</div>
+                <h2 class="font-display font-bold text-brand-dark" style="font-size:clamp(1.5rem,2.5vw,2rem);">Customer Reviews &amp; Ratings</h2>
+                <div class="gold-line mt-3"></div>
+            </div>
+            <button type="button" onclick="toggleReviewForm()" class="btn-dark px-5 py-3 rounded-xl text-xs font-bold shadow-md cursor-pointer hover:bg-brand-gold transition-colors">
+                <i class="fa-solid fa-pen-to-square"></i> <span>Write a Review</span>
+            </button>
+        </div>
+
+        <!-- Rating Breakdown & Summary Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <!-- Left: Overall Rating Box & Star Distribution -->
+            <div class="lg:col-span-5 bg-white rounded-3xl p-6 sm:p-7 border border-brand-border shadow-sm space-y-6">
+                <div class="flex items-center gap-5">
+                    <div class="text-center p-4 rounded-2xl bg-brand-surface border border-brand-border shrink-0">
+                        <div class="font-display font-black text-brand-dark text-4xl" id="ratingAvgDisplay">{{ product.rating }}</div>
+                        <div class="flex items-center justify-center gap-1 text-amber-400 text-xs my-1.5">
+                            <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                        </div>
+                        <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">out of 5</div>
+                    </div>
+                    <div>
+                        <div class="font-bold text-brand-dark text-sm sm:text-base">Customer Satisfaction</div>
+                        <div class="text-xs text-gray-500 mt-1">Based on <strong class="text-brand-dark" id="ratingCountDisplay">{{ product.reviews_count }}</strong> verified customer ratings</div>
+                        <div class="inline-flex items-center gap-1.5 text-[11px] font-bold text-green-700 bg-green-50 px-2.5 py-1 rounded-lg border border-green-200 mt-2.5">
+                            <i class="fa-solid fa-circle-check"></i> 100% Genuine Purchases
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Star Rating Distribution Bars -->
+                <div class="space-y-2.5 pt-4 border-t border-brand-border text-xs">
+                    {% for star, data in star_distribution.items %}
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1 w-12 font-bold text-gray-700 shrink-0">
+                            <span>{{ star }}</span> <i class="fa-solid fa-star text-amber-400 text-[10px]"></i>
+                        </div>
+                        <div class="flex-1 h-2 rounded-full overflow-hidden bg-brand-surface border border-brand-border">
+                            <div class="h-full rounded-full transition-all duration-700 bg-gradient-to-r from-amber-400 to-brand-gold" style="width:{{ data.pct }}%;"></div>
+                        </div>
+                        <span class="w-12 text-right text-gray-400 font-semibold">{{ data.pct }}%</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right: Interactive Review Form & Feed -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- Submit Review Form Card (Collapsible) -->
+                <div id="reviewFormCard" class="hidden bg-white rounded-3xl p-6 sm:p-7 border-2 border-brand-gold shadow-md space-y-5">
+                    <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                        <h3 class="font-bold text-sm text-brand-dark flex items-center gap-2">
+                            <i class="fa-solid fa-feather text-brand-gold"></i> Write Your Review for {{ product.name }}
+                        </h3>
+                        <button type="button" onclick="toggleReviewForm()" class="text-gray-400 hover:text-gray-700 text-sm cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <!-- Review Alert -->
+                    <div id="reviewAlertBox" class="hidden p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2"></div>
+
+                    <form id="productReviewForm" onsubmit="handleReviewSubmit(event)" class="space-y-4 text-xs">
+                        {% csrf_token %}
+                        <!-- Interactive Star Selector -->
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1.5 text-xs">Overall Rating *</label>
+                            <div class="flex items-center gap-2" id="starSelectorContainer">
+                                <input type="hidden" name="rating" id="reviewRatingInput" value="5">
+                                <div class="flex items-center gap-1.5 cursor-pointer text-2xl select-none" id="starIconsRow">
+                                    <i class="fa-solid fa-star text-amber-400 transition-colors" data-star="1" onclick="selectStar(1)" onmouseover="hoverStar(1)" onmouseout="resetStarHover()"></i>
+                                    <i class="fa-solid fa-star text-amber-400 transition-colors" data-star="2" onclick="selectStar(2)" onmouseover="hoverStar(2)" onmouseout="resetStarHover()"></i>
+                                    <i class="fa-solid fa-star text-amber-400 transition-colors" data-star="3" onclick="selectStar(3)" onmouseover="hoverStar(3)" onmouseout="resetStarHover()"></i>
+                                    <i class="fa-solid fa-star text-amber-400 transition-colors" data-star="4" onclick="selectStar(4)" onmouseover="hoverStar(4)" onmouseout="resetStarHover()"></i>
+                                    <i class="fa-solid fa-star text-amber-400 transition-colors" data-star="5" onclick="selectStar(5)" onmouseover="hoverStar(5)" onmouseout="resetStarHover()"></i>
+                                </div>
+                                <span class="text-xs font-bold text-brand-dark ml-2" id="starRatingLabel">5 Stars — Excellent</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div>
+                                <label class="block font-bold text-gray-700 mb-1">Your Full Name *</label>
+                                <input type="text" name="customer_name" id="rev_customer_name" required placeholder="e.g. Mahesh Patil"
+                                       class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-gray-700 mb-1">City / Area</label>
+                                <input type="text" name="city" id="rev_city" placeholder="e.g. Ahilyanagar / Savedi"
+                                       class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">WhatsApp / Phone Number (Optional — auto-verifies purchase)</label>
+                            <input type="tel" name="customer_phone" id="rev_customer_phone" maxlength="10" placeholder="e.g. 9876543210"
+                                   class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">Review Headline</label>
+                            <input type="text" name="headline" id="rev_headline" placeholder="e.g. Perfect fit, pure cotton feel"
+                                   class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                        </div>
+
+                        <div>
+                            <label class="block font-bold text-gray-700 mb-1">Your Review *</label>
+                            <textarea name="comment" id="rev_comment" rows="3" required placeholder="Share your experience regarding the fabric comfort, tailoring, and fit..."
+                                      class="inp w-full text-xs px-3.5 py-2.5 rounded-xl border border-brand-border bg-white resize-none transition-all"></textarea>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-3 pt-2">
+                            <button type="button" onclick="toggleReviewForm()" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-semibold">Cancel</button>
+                            <button type="submit" id="btnSubmitReview" class="btn-gold px-6 py-2.5 rounded-xl text-xs font-bold shadow-md cursor-pointer">
+                                <span>Publish Review</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Feed of Reviews -->
+                <div class="space-y-4" id="reviewsFeed">
+                    {% for rev in product_reviews %}
+                    <div class="bg-white rounded-2xl p-5 border border-brand-border shadow-sm space-y-2.5">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-full bg-brand-surface border border-brand-border font-bold text-brand-dark flex items-center justify-center text-xs">
+                                    {{ rev.customer_name|slice:":1" }}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-xs text-brand-dark">{{ rev.customer_name }}</div>
+                                    <div class="text-[10px] text-gray-400">{{ rev.city }} &bull; {{ rev.created_at|date:"d M Y" }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex text-amber-400 text-xs">
+                                    {% for i in "12345"|make_list %}
+                                    {% if forloop.counter <= rev.rating %}
+                                    <i class="fa-solid fa-star"></i>
+                                    {% else %}
+                                    <i class="fa-regular fa-star text-gray-300"></i>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% if rev.is_verified %}
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                                    <i class="fa-solid fa-circle-check"></i> Verified Buyer
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% if rev.headline %}
+                        <div class="font-bold text-xs text-brand-dark">{{ rev.headline }}</div>
+                        {% endif %}
+                        <p class="text-xs text-gray-600 leading-relaxed">{{ rev.comment|linebreaksbr }}</p>
+                    </div>
+                    {% empty %}
+                    <div id="noReviewsPlaceholder" class="bg-white rounded-2xl p-8 border border-brand-border text-center space-y-3 shadow-sm">
+                        <div class="w-12 h-12 rounded-full bg-amber-50 text-brand-gold flex items-center justify-center mx-auto text-xl">
+                            <i class="fa-solid fa-comment-dots"></i>
+                        </div>
+                        <div class="font-bold text-sm text-brand-dark">No reviews yet for this garment</div>
+                        <p class="text-xs text-gray-500 max-w-sm mx-auto">Be the first customer to share your thoughts on the fit, fabric, and styling!</p>
+                        <button type="button" onclick="toggleReviewForm()" class="btn-dark px-5 py-2.5 rounded-xl text-xs font-bold mt-2 cursor-pointer">
+                            Write First Review
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Products -->
+    {% if related_products %}
+    <div class="mt-20 pt-10 border-t border-brand-border">
+        <div class="mb-8"><div class="section-label mb-2">More Like This</div><h2 class="font-display font-bold text-brand-dark" style="font-size:1.5rem;">More From {{ product.category.name }}</h2><div class="gold-line mt-3"></div></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-5">
+            {% for item in related_products %}
+            <div class="product-card group relative flex flex-col">
+                <div class="relative overflow-hidden" style="aspect-ratio:3/4;background:#f7f5f2;">
+                    <a href="{% url 'product_detail' slug=item.slug %}"><img src="{{ item.main_image }}" alt="{{ item.name }}" class="card-img w-full h-full object-cover object-top"></a>
+                    <button type="button" 
+                            onclick="toggleWishlist(event, {{ item.id }})" 
+                            data-product-id="{{ item.id }}"
+                            class="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 backdrop-blur-sm shadow flex items-center justify-center transition-all hover:scale-110 z-10 {% if item.id in wishlist_ids %}text-red-500{% else %}text-gray-400 hover:text-red-500{% endif %}"
+                            title="Save to Wishlist">
+                        <i class="{% if item.id in wishlist_ids %}fa-solid{% else %}fa-regular{% endif %} fa-heart text-xs"></i>
+                    </button>
+                </div>
+                <div class="p-3.5 flex flex-col flex-1">
+                    <a href="{% url 'product_detail' slug=item.slug %}" class="font-bold text-brand-dark hover:text-brand-gold transition-colors truncate block" style="font-size:13px;">{{ item.name }}</a>
+                    <div class="font-extrabold text-brand-dark mt-1" style="font-size:15px;">&#8377;{{ item.discount_price }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- SIZE CHART MODAL -->
+<div id="sizeModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background:rgba(0,0,0,.65);backdrop-filter:blur(4px);">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+            <h3 class="font-bold text-brand-dark flex items-center gap-2" style="font-size:15px;"><i class="fa-solid fa-ruler-combined" style="color:#b8862b;"></i> SK Fashion Size Chart</h3>
+            <button onclick="document.getElementById('sizeModal').classList.add('hidden')" class="w-8 h-8 rounded-full hover:bg-brand-surface flex items-center justify-center transition-colors text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-xs text-gray-500">All measurements in inches. For relaxed fit, pick one size up.</p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border-collapse">
+                <thead><tr style="background:#f7f5f2;">
+                    <th class="p-2.5 border border-brand-border font-bold text-brand-dark">Size</th>
+                    <th class="p-2.5 border border-brand-border font-bold text-brand-dark">Chest"</th>
+                    <th class="p-2.5 border border-brand-border font-bold text-brand-dark">Shoulder"</th>
+                    <th class="p-2.5 border border-brand-border font-bold text-brand-dark">Length"</th>
+                </tr></thead>
+                <tbody class="text-gray-600">
+                    <tr><td class="p-2 border border-brand-border font-bold text-brand-dark">S (38)</td><td class="p-2 border border-brand-border">38</td><td class="p-2 border border-brand-border">17.5</td><td class="p-2 border border-brand-border">28.5</td></tr>
+                    <tr><td class="p-2 border border-brand-border font-bold text-brand-dark">M (40)</td><td class="p-2 border border-brand-border">40</td><td class="p-2 border border-brand-border">18.0</td><td class="p-2 border border-brand-border">29.0</td></tr>
+                    <tr><td class="p-2 border border-brand-border font-bold text-brand-dark">L (42)</td><td class="p-2 border border-brand-border">42</td><td class="p-2 border border-brand-border">18.5</td><td class="p-2 border border-brand-border">29.5</td></tr>
+                    <tr><td class="p-2 border border-brand-border font-bold text-brand-dark">XL (44)</td><td class="p-2 border border-brand-border">44</td><td class="p-2 border border-brand-border">19.0</td><td class="p-2 border border-brand-border">30.0</td></tr>
+                    <tr><td class="p-2 border border-brand-border font-bold text-brand-dark">XXL (46)</td><td class="p-2 border border-brand-border">46</td><td class="p-2 border border-brand-border">19.5</td><td class="p-2 border border-brand-border">30.5</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <button onclick="document.getElementById('sizeModal').classList.add('hidden')" class="btn-dark w-full py-3 rounded-xl text-sm">Got It</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function switchImg(src) { document.getElementById('mainProductImage').src = src; }
+function checkPincode() {
+    const pin = document.getElementById('pincodeInput').value.trim();
+    const res = document.getElementById('pincodeResult');
+    res.classList.remove('hidden');
+    if (!pin || pin.length !== 6 || isNaN(pin)) {
+        res.innerHTML = '<span style="color:#dc2626;"><i class="fa-solid fa-circle-exclamation mr-1"></i>Please enter a valid 6-digit PIN.</span>'; return;
+    }
+    if (pin.startsWith('414')) res.innerHTML = '<span style="color:#16a34a;"><i class="fa-solid fa-circle-check mr-1"></i>Express Ahilyanagar Delivery! Same-day/Next-day. Free pickup at Delhi Gate.</span>';
+    else if (['41','40','42','43','44'].some(p => pin.startsWith(p))) res.innerHTML = '<span style="color:#16a34a;"><i class="fa-solid fa-circle-check mr-1"></i>Maharashtra Delivery: 2-3 business days.</span>';
+    else res.innerHTML = '<span style="color:#2563eb;"><i class="fa-solid fa-circle-check mr-1"></i>Pan-India Shipping: 3-5 business days via Express Courier.</span>';
+}
+
+/* ==========================================
+   PRODUCT REVIEWS & RATINGS SYSTEM
+========================================== */
+let currentSelectedRating = 5;
+const ratingLabels = {
+    1: '1 Star — Poor',
+    2: '2 Stars — Fair',
+    3: '3 Stars — Good',
+    4: '4 Stars — Very Good',
+    5: '5 Stars — Excellent'
+};
+
+function toggleReviewForm() {
+    const formCard = document.getElementById('reviewFormCard');
+    if (!formCard) return;
+    const isHidden = formCard.classList.contains('hidden');
+    if (isHidden) {
+        formCard.classList.remove('hidden');
+        formCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } else {
+        formCard.classList.add('hidden');
+    }
+}
+
+function selectStar(rating) {
+    currentSelectedRating = parseInt(rating);
+    const ratingInput = document.getElementById('reviewRatingInput');
+    if (ratingInput) ratingInput.value = currentSelectedRating;
+    updateStarDisplay(currentSelectedRating);
+}
+
+function hoverStar(rating) {
+    updateStarDisplay(parseInt(rating));
+}
+
+function resetStarHover() {
+    updateStarDisplay(currentSelectedRating);
+}
+
+function updateStarDisplay(val) {
+    const icons = document.querySelectorAll('#starIconsRow i');
+    icons.forEach((icon) => {
+        const starNum = parseInt(icon.getAttribute('data-star'));
+        if (starNum <= val) {
+            icon.className = 'fa-solid fa-star text-amber-400 transition-colors';
+        } else {
+            icon.className = 'fa-regular fa-star text-gray-300 transition-colors';
+        }
+    });
+    const label = document.getElementById('starRatingLabel');
+    if (label) {
+        label.textContent = ratingLabels[val] || `${val} Stars`;
+    }
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function handleReviewSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const btn = document.getElementById('btnSubmitReview');
+    const alertBox = document.getElementById('reviewAlertBox');
+
+    if (!form || !btn) return;
+
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> <span>Publishing...</span>';
+
+    if (alertBox) {
+        alertBox.className = 'hidden';
+        alertBox.innerHTML = '';
+    }
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch("{% url 'submit_review' slug=product.slug %}", {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            // Update displayed averages and counts
+            if (data.new_rating !== undefined) {
+                const avgDisplay = document.getElementById('ratingAvgDisplay');
+                if (avgDisplay) avgDisplay.textContent = Number(data.new_rating).toFixed(1);
+                const topAvg = document.getElementById('topRatingAvg');
+                if (topAvg) topAvg.textContent = Number(data.new_rating).toFixed(1);
+            }
+            if (data.new_count !== undefined) {
+                const countDisplay = document.getElementById('ratingCountDisplay');
+                if (countDisplay) countDisplay.textContent = data.new_count;
+                const topCount = document.getElementById('topReviewsCount');
+                if (topCount) topCount.textContent = data.new_count;
+            }
+
+            // Remove placeholder if present
+            const placeholder = document.getElementById('noReviewsPlaceholder');
+            if (placeholder) placeholder.remove();
+
+            // Prepend new review card
+            const reviewsFeed = document.getElementById('reviewsFeed');
+            if (reviewsFeed && data.review) {
+                const rev = data.review;
+                let starsHtml = '';
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= rev.rating) {
+                        starsHtml += '<i class="fa-solid fa-star"></i>';
+                    } else {
+                        starsHtml += '<i class="fa-regular fa-star text-gray-300"></i>';
+                    }
+                }
+
+                const verifiedBadge = rev.is_verified ? `
+                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded-md border border-green-200">
+                        <i class="fa-solid fa-circle-check"></i> Verified Buyer
+                    </span>
+                ` : '';
+
+                const headlineHtml = rev.headline ? `<div class="font-bold text-xs text-brand-dark">${escapeHtml(rev.headline)}</div>` : '';
+
+                const newCard = document.createElement('div');
+                newCard.className = 'bg-white rounded-2xl p-5 border border-brand-gold shadow-md space-y-2.5 transition-all animate-fadeIn';
+                newCard.innerHTML = `
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-brand-surface border border-brand-border font-bold text-brand-dark flex items-center justify-center text-xs">
+                                ${escapeHtml(rev.customer_name.charAt(0).toUpperCase())}
+                            </div>
+                            <div>
+                                <div class="font-bold text-xs text-brand-dark">${escapeHtml(rev.customer_name)}</div>
+                                <div class="text-[10px] text-gray-400">${escapeHtml(rev.city)} &bull; ${escapeHtml(rev.created_at)}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="flex text-amber-400 text-xs gap-0.5">
+                                ${starsHtml}
+                            </div>
+                            ${verifiedBadge}
+                        </div>
+                    </div>
+                    ${headlineHtml}
+                    <p class="text-xs text-gray-600 leading-relaxed">${escapeHtml(rev.comment).replace(/\n/g, '<br>')}</p>
+                `;
+                reviewsFeed.prepend(newCard);
+            }
+
+            // Show success message
+            if (alertBox) {
+                alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2 bg-green-50 text-green-800 border-green-200';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-check text-green-600 text-sm"></i> ' + (data.message || 'Review published successfully!');
+            }
+
+            form.reset();
+            selectStar(5);
+
+            setTimeout(() => {
+                toggleReviewForm();
+            }, 2500);
+
+        } else {
+            if (alertBox) {
+                alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2 bg-red-50 text-red-800 border-red-200';
+                alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-600 text-sm"></i> ' + (data.message || 'Failed to submit review.');
+            }
+        }
+    } catch (err) {
+        console.error('Error publishing review:', err);
+        if (alertBox) {
+            alertBox.className = 'p-3.5 rounded-xl text-xs font-semibold border flex items-center gap-2 bg-red-50 text-red-800 border-red-200';
+            alertBox.innerHTML = '<i class="fa-solid fa-circle-exclamation text-red-600 text-sm"></i> An error occurred while submitting your review. Please try again.';
+        }
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+    }
+}
+</script>
+{% endblock %}

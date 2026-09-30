@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ store_settings.NAME }} - {{ store_settings.TAGLINE }}{% endblock %} | SK Fashion Ahilyanagar</title>
+    <meta name="description" content="{% block meta_description %}SK Fashion - Premium Menswear at Delhi Gate, Sarjepura, Ahilyanagar.{% endblock %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    brand: {
+                        dark:'#111111',charcoal:'#1e1e1e',
+                        gold:'#b8862b',gold2:'#d4a843',gold3:'#f0c870',
+                        cream:'#fdf8f0',surface:'#f7f5f2',border:'#e5e0d8'
+                    }
+                },
+                fontFamily: {
+                    sans:['Inter','system-ui','sans-serif'],
+                    display:['"Playfair Display"','Georgia','serif'],
+                }
+            }
+        }
+    }
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+    *,*::before,*::after{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:#f7f5f2;color:#111;display:flex;flex-direction:column;min-height:100vh;padding-bottom:62px}
+    @media(min-width:768px){body{padding-bottom:0}}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-thumb{background:#b8862b;border-radius:4px}
+    .scrollbar-none{-ms-overflow-style:none;scrollbar-width:none}
+    .scrollbar-none::-webkit-scrollbar{display:none}
+    @keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+    .marquee-track{overflow:hidden}
+    .marquee-inner{display:flex;animation:marquee 40s linear infinite;width:max-content}
+    .marquee-inner:hover{animation-play-state:paused}
+    .glass{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+    .btn-dark{background:#111;color:#fff;font-weight:700;transition:background .2s,transform .2s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn-dark:hover{background:#2a2a2a;transform:translateY(-1px);box-shadow:0 8px 20px rgba(17,17,17,.2)}
+    .btn-gold{background:linear-gradient(135deg,#b8862b,#d4a843,#b8862b);background-size:200% auto;color:#fff;font-weight:700;transition:background-position .4s,transform .2s,box-shadow .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn-gold:hover{background-position:right center;transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,134,43,.32)}
+    .btn-wa{background:#25D366;color:#fff;font-weight:700;transition:background .2s,transform .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn-wa:hover{background:#128C7E;transform:translateY(-1px)}
+    .btn-outline{background:transparent;color:#111;font-weight:600;border:1.5px solid #e5e0d8;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn-outline:hover{border-color:#b8862b;background:#fdf8f0;transform:translateY(-1px)}
+    .product-card{background:#fff;border:1px solid #e5e0d8;border-radius:16px;overflow:hidden;transition:box-shadow .3s,transform .3s}
+    .product-card:hover{box-shadow:0 20px 60px rgba(17,17,17,.10);transform:translateY(-5px)}
+    .product-card .card-img{transition:transform .55s cubic-bezier(.25,.46,.45,.94)}
+    .product-card:hover .card-img{transform:scale(1.07)}
+    .cat-card{transition:box-shadow .25s,transform .25s}
+    .cat-card:hover{box-shadow:0 8px 32px rgba(184,134,43,.15);transform:translateY(-3px)}
+    .nav-link{position:relative;padding-bottom:2px}
+    .nav-link::after{content:'';position:absolute;left:0;bottom:-1px;width:0;height:2px;background:#b8862b;border-radius:2px;transition:width .25s}
+    .nav-link:hover::after{width:100%}
+    .cat-pill{display:inline-flex;align-items:center;padding:5px 14px;border-radius:9999px;border:1px solid #e5e0d8;font-size:12px;font-weight:600;color:#4b4b4b;background:#fff;transition:background .2s,color .2s,border-color .2s;white-space:nowrap}
+    .cat-pill:hover,.cat-pill.active{background:#111;color:#fff;border-color:#111}
+    @keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .flash-msg{animation:slideDown .35s ease}
+    @keyframes wa-pulse{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.4)}60%{box-shadow:0 0 0 12px rgba(37,211,102,0)}}
+    .wa-pulse{animation:wa-pulse 2.8s ease infinite}
+    .inp:focus{outline:none;border-color:#b8862b!important;box-shadow:0 0 0 3px rgba(184,134,43,.12)!important}
+    .mob-nav-link{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 10px;border-radius:10px;transition:color .2s;color:#6b7280;font-size:10px;font-weight:600}
+    .mob-nav-link:hover,.mob-nav-link.active{color:#b8862b}
+    .mob-nav-link i{font-size:1.15rem}
+    .section-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.18em;color:#b8862b}
+    .gold-line{display:inline-block;width:40px;height:2px;background:linear-gradient(90deg,#b8862b,#d4a843);border-radius:2px}
+    .badge-off{background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;position:absolute;top:12px;left:12px}
+    .badge-fit{background:rgba(17,17,17,.72);color:#fff;font-size:9px;font-weight:600;padding:2px 8px;border-radius:4px;position:absolute;top:12px;right:12px;backdrop-filter:blur(4px)}
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- ANNOUNCEMENT TICKER -->
+<div class="bg-brand-dark marquee-track text-white" style="font-size:11px;padding:7px 0;">
+    <div class="marquee-inner">
+        {% for _ in "12" %}
+        <span class="flex items-center gap-8 px-6 whitespace-nowrap font-medium tracking-wide">
+            <span><i class="fa-solid fa-crown mr-1.5" style="color:#d4a843;font-size:9px;"></i>Ahilyanagar's Premier Menswear Showroom</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+            <span><i class="fa-solid fa-truck-fast mr-1.5" style="color:#f0c870;font-size:9px;"></i>Free Shipping Over &#8377;999</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+            <span><i class="fa-solid fa-location-dot mr-1.5" style="color:#d4a843;font-size:9px;"></i>Shop No 01, Delhi Gate, Sarjepura, Ahilyanagar</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+            <span><i class="fa-regular fa-clock mr-1.5" style="color:#f0c870;font-size:9px;"></i>Open Daily 10 AM &ndash; 10 PM</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+            <span><i class="fa-solid fa-hand-holding-dollar mr-1.5" style="color:#d4a843;font-size:9px;"></i>Cash On Delivery Available</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+            <span><i class="fa-brands fa-whatsapp mr-1.5" style="color:#25D366;font-size:9px;"></i>WhatsApp: {{ store_settings.PHONE }}</span>
+            <span style="color:#d4a843;">&#x2022;</span>
+        </span>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- STICKY HEADER -->
+<header class="glass sticky top-0 z-40 border-b border-brand-border" style="box-shadow:0 1px 12px rgba(17,17,17,.06);">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between py-3 gap-4">
+            <!-- Logo -->
+            <a href="{% url 'home' %}" class="flex items-center gap-3 flex-shrink-0 group">
+                <div class="w-11 h-11 rounded-xl flex flex-col items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform" style="background:linear-gradient(135deg,#111,#2a2a2a);">
+                    <span class="font-display font-bold leading-none" style="color:#d4a843;font-size:15px;">SK</span>
+                    <div style="width:20px;height:1.5px;background:linear-gradient(90deg,#b8862b,#d4a843);border-radius:2px;margin-top:3px;"></div>
+                </div>
+                <div class="hidden sm:block leading-none">
+                    <span class="block font-display font-bold tracking-tight group-hover:text-brand-gold transition-colors" style="font-size:20px;color:#111;">SK FASHION</span>
+                    <span class="block mt-1 text-brand-gold" style="font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;">Everything For Mens</span>
+                </div>
+            </a>
+            <!-- Desktop Search -->
+            <form action="{% url 'product_list' %}" method="GET" class="hidden md:flex flex-1 max-w-xl mx-4 lg:mx-8 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:13px;pointer-events:none;"></i>
+                <input type="text" name="q" value="{{ search_query|default:'' }}"
+                       placeholder="Search shirts, jeans, kurtas, t-shirts..."
+                       class="inp w-full pl-10 pr-4 py-2.5 rounded-full text-sm border border-brand-border bg-brand-surface transition-all"
+                       style="font-size:13.5px;">
+            </form>
+            <!-- Actions -->
+            <div class="flex items-center gap-1.5 sm:gap-3">
+                <nav class="hidden lg:flex items-center gap-6" style="font-size:13.5px;font-weight:600;color:#333;">
+                    <a href="{% url 'home' %}" class="nav-link hover:text-brand-dark transition-colors">Home</a>
+                    <a href="{% url 'product_list' %}" class="nav-link hover:text-brand-dark transition-colors">Shop</a>
+                    <a href="{% url 'store_locator' %}" class="nav-link flex items-center gap-1.5 hover:text-brand-dark transition-colors">
+                        <i class="fa-solid fa-location-dot text-brand-gold" style="font-size:11px;"></i>Store
+                    </a>
+                    <a href="{% url 'track_order' %}" class="nav-link hover:text-brand-dark transition-colors">Track</a>
+                </nav>
+                <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20want%20to%20enquire%20about%20menswear."
+                   target="_blank" class="btn-wa hidden sm:inline-flex text-xs px-3.5 py-2 rounded-full" style="font-size:12px;">
+                    <i class="fa-brands fa-whatsapp" style="font-size:14px;"></i>
+                    <span class="hidden md:inline">WhatsApp</span>
+                </a>
+                <!-- Wishlist Icon -->
+                <a href="{% url 'wishlist_view' %}" class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-brand-surface transition-colors" title="Wishlist">
+                    <i class="fa-regular fa-heart text-brand-dark hover:text-red-500 transition-colors" style="font-size:18px;"></i>
+                    <span id="wishlistBadge" class="absolute -top-0.5 -right-0.5 text-white font-black flex items-center justify-center rounded-full {% if not wishlist_count %}hidden{% endif %}" style="width:18px;height:18px;font-size:9px;background:#dc2626;">{{ wishlist_count|default:0 }}</span>
+                </a>
+                <!-- Bag Icon -->
+                <a href="{% url 'cart_view' %}" class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-brand-surface transition-colors" title="Bag">
+                    <i class="fa-solid fa-bag-shopping text-brand-dark" style="font-size:19px;"></i>
+                    <span id="cartBadge" class="absolute -top-0.5 -right-0.5 text-white font-black flex items-center justify-center rounded-full" style="width:18px;height:18px;font-size:9px;background:linear-gradient(135deg,#b8862b,#d4a843);">{{ cart_count|default:0 }}</span>
+                </a>
+                <!-- Account / Sign In -->
+                {% if request.user.is_authenticated %}
+                <a href="{% url 'customer_account' %}" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-brand-surface border border-brand-border text-xs font-bold text-brand-dark transition-colors" title="My Account">
+                    <i class="fa-solid fa-circle-user text-brand-gold text-sm"></i>
+                    <span class="hidden sm:inline">{{ request.user.first_name|default:request.user.username|truncatechars:9 }}</span>
+                </a>
+                {% else %}
+                <a href="{% url 'customer_login' %}" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-brand-surface border border-brand-border text-xs font-bold text-brand-dark transition-colors" title="Sign In">
+                    <i class="fa-regular fa-user text-gray-500 text-sm"></i>
+                    <span class="hidden sm:inline">Sign In</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <!-- Mobile Search -->
+    <div class="md:hidden px-4 pb-3">
+        <form action="{% url 'product_list' %}" method="GET" class="relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" style="font-size:12px;pointer-events:none;"></i>
+            <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search shirts, jeans, kurtas..."
+                   class="inp w-full pl-9 pr-4 py-2 rounded-full text-sm border border-brand-border bg-brand-surface transition-all" style="font-size:13px;">
+        </form>
+    </div>
+    <!-- Category Bar -->
+    <div class="border-t border-brand-border bg-white overflow-x-auto scrollbar-none">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-2 py-2.5 whitespace-nowrap">
+            <a href="{% url 'product_list' %}" class="cat-pill">All Styles</a>
+            {% for cat in nav_categories %}
+            <a href="{% url 'product_list' %}?category={{ cat.slug }}" class="cat-pill">{{ cat.name }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</header>
+
+<!-- Flash Messages -->
+{% if messages %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
+    {% for message in messages %}
+    <div class="flash-msg flex items-center gap-3 p-4 rounded-xl text-sm font-medium border
+        {% if message.tags == 'error' %}bg-red-50 text-red-800 border-red-200
+        {% elif message.tags == 'warning' %}bg-amber-50 text-amber-800 border-amber-200
+        {% else %}bg-green-50 text-green-800 border-green-200{% endif %}">
+        <i class="fa-solid {% if message.tags == 'error' %}fa-circle-xmark{% elif message.tags == 'warning' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+        <span>{{ message }}</span>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<main class="flex-grow" style="min-height:60vh;">{% block content %}{% endblock %}</main>
+
+<!-- FOOTER -->
+<footer class="bg-brand-dark text-gray-400 mt-20 border-t border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b border-gray-800">
+            <!-- Brand -->
+            <div class="space-y-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center" style="background:linear-gradient(135deg,#b8862b,#d4a843);">
+                        <span class="font-display text-white font-bold" style="font-size:15px;">SK</span>
+                    </div>
+                    <div>
+                        <span class="block text-white font-display font-bold text-xl leading-none">SK FASHION</span>
+                        <span class="block mt-1 text-brand-gold" style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;">Everything For Mens</span>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-500 leading-relaxed">Ahilyanagar's trusted menswear destination. Premium fabrics, perfect fits, honest prices.</p>
+                <div class="flex items-center gap-2.5">
+                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-green-600 hover:border-green-600 hover:text-white flex items-center justify-center transition-all"><i class="fa-brands fa-whatsapp text-sm"></i></a>
+                    <a href="https://instagram.com" target="_blank" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-pink-600 hover:border-pink-600 hover:text-white flex items-center justify-center transition-all"><i class="fa-brands fa-instagram text-sm"></i></a>
+                    <a href="tel:{{ store_settings.PHONE }}" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-brand-gold hover:border-brand-gold hover:text-white flex items-center justify-center transition-all"><i class="fa-solid fa-phone" style="font-size:11px;"></i></a>
+                </div>
+            </div>
+            <!-- Collections -->
+            <div>
+                <h3 class="text-white font-bold text-xs uppercase tracking-widest mb-5" style="padding-left:10px;border-left:2px solid #b8862b;">Collections</h3>
+                <ul class="space-y-2.5 text-sm text-gray-500">
+                    {% for cat in nav_categories %}
+                    <li><a href="{% url 'product_list' %}?category={{ cat.slug }}" class="hover:text-brand-gold2 transition-colors">{{ cat.name }}</a></li>
+                    {% empty %}<li><a href="{% url 'product_list' %}" class="hover:text-brand-gold2 transition-colors">All Menswear</a></li>{% endfor %}
+                </ul>
+            </div>
+            <!-- Help -->
+            <div>
+                <h3 class="text-white font-bold text-xs uppercase tracking-widest mb-5" style="padding-left:10px;border-left:2px solid #b8862b;">Customer Help</h3>
+                <ul class="space-y-2.5 text-sm text-gray-500">
+                    <li><a href="{% url 'track_order' %}" class="hover:text-brand-gold2 transition-colors">Track Your Order</a></li>
+                    <li><a href="{% url 'cart_view' %}" class="hover:text-brand-gold2 transition-colors">Shopping Bag</a></li>
+                    <li><a href="{% url 'store_locator' %}" class="hover:text-brand-gold2 transition-colors">Find Our Store</a></li>
+                    <li><a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="hover:text-brand-gold2 transition-colors">WhatsApp Support</a></li>
+                    <li><a href="/admin/" class="hover:text-brand-gold2 transition-colors">Owner Login</a></li>
+                </ul>
+            </div>
+            <!-- Showroom -->
+            <div>
+                <h3 class="text-white font-bold text-xs uppercase tracking-widest mb-5" style="padding-left:10px;border-left:2px solid #b8862b;">Our Showroom</h3>
+                <div class="space-y-3 text-sm text-gray-500">
+                    <div class="flex items-start gap-2.5"><i class="fa-solid fa-location-dot text-brand-gold2 mt-0.5 flex-shrink-0" style="font-size:13px;"></i><span>Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura, Ahilyanagar (Ahmednagar), MH 414001</span></div>
+                    <div class="flex items-center gap-2.5"><i class="fa-regular fa-clock text-brand-gold2 flex-shrink-0" style="font-size:12px;"></i><span>Open Daily: 10:00 AM &ndash; 10:00 PM</span></div>
+                    <div class="flex items-center gap-2.5"><i class="fa-solid fa-phone text-brand-gold2 flex-shrink-0" style="font-size:11px;"></i><a href="tel:{{ store_settings.PHONE }}" class="hover:text-brand-gold2 transition-colors">{{ store_settings.PHONE }}</a></div>
+                    <a href="{% url 'store_locator' %}" class="btn-outline inline-flex items-center gap-2 text-xs mt-2 px-4 py-2 rounded-lg" style="color:#d4a843;border-color:rgba(184,134,43,.35);">
+                        <i class="fa-solid fa-diamond-turn-right" style="font-size:11px;"></i> Get Directions
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="pt-8 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-gray-600">
+            <p>&#169; 2026 SK Fashion, Ahilyanagar. All rights reserved.</p>
+            <div class="flex flex-wrap items-center justify-center gap-4">
+                <span><i class="fa-solid fa-shield-halved text-green-500 mr-1"></i>100% Genuine Fabrics</span>
+                <span><i class="fa-solid fa-money-bill-wave text-brand-gold2 mr-1"></i>UPI &amp; COD</span>
+                <span><i class="fa-solid fa-truck-fast text-blue-400 mr-1"></i>Pan-India Shipping</span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-brand-border flex justify-around items-center px-1 py-1" style="box-shadow:0 -4px 24px rgba(17,17,17,.08);">
+    <a href="{% url 'home' %}" class="mob-nav-link"><i class="fa-solid fa-house"></i><span>Home</span></a>
+    <a href="{% url 'product_list' %}" class="mob-nav-link"><i class="fa-solid fa-shirt"></i><span>Shop</span></a>
+    <a href="{% url 'cart_view' %}" class="relative flex flex-col items-center -mt-5">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center relative" style="background:linear-gradient(135deg,#b8862b,#d4a843);box-shadow:0 4px 16px rgba(184,134,43,.35);">
+            <i class="fa-solid fa-bag-shopping text-white" style="font-size:20px;"></i>
+            <span id="cartBadgeMobile" class="absolute -top-1 -right-1 bg-red-500 text-white font-black rounded-full flex items-center justify-center" style="width:18px;height:18px;font-size:9px;">{{ cart_count|default:0 }}</span>
+        </div>
+        <span style="font-size:10px;font-weight:600;color:#6b7280;margin-top:3px;">Bag</span>
+    </a>
+    <a href="{% url 'wishlist_view' %}" class="mob-nav-link relative">
+        <i class="fa-regular fa-heart"></i>
+        <span>Wishlist</span>
+        <span id="wishlistBadgeMobile" class="absolute top-1 right-3 bg-red-500 text-white font-black rounded-full flex items-center justify-center {% if not wishlist_count %}hidden{% endif %}" style="width:14px;height:14px;font-size:8px;">{{ wishlist_count|default:0 }}</span>
+    </a>
+    <a href="{% url 'store_locator' %}" class="mob-nav-link"><i class="fa-solid fa-map-location-dot"></i><span>Store</span></a>
+</nav>
+
+<!-- Floating WhatsApp -->
+<a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%27d%20like%20to%20enquire%20about%20menswear." target="_blank"
+   class="hidden md:flex wa-pulse fixed bottom-8 right-8 z-40 text-white rounded-full shadow-2xl items-center gap-2 py-3.5 px-4 group transition-all hover:scale-105" style="background:#25D366;">
+    <i class="fa-brands fa-whatsapp" style="font-size:22px;"></i>
+    <span class="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 text-sm font-bold pr-1">Chat with Store</span>
+</a>
+
+<!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
+<div id="toastContainer" class="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>
+
+<script>
+function getCsrfToken() {
+    const cookies = document.cookie.split(';');
+    for (let c of cookies) {
+        c = c.trim();
+        if (c.startsWith('csrftoken=')) return c.substring('csrftoken='.length);
+    }
+    const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+    return tokenInput ? tokenInput.value : '';
+}
+
+function updateHeaderWishlistCount(count) {
+    const badges = [document.getElementById('wishlistBadge'), document.getElementById('wishlistBadgeMobile')];
+    badges.forEach(b => {
+        if (!b) return;
+        b.textContent = count;
+        if (count > 0) {
+            b.classList.remove('hidden');
+        } else {
+            b.classList.add('hidden');
+        }
+    });
+}
+
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `pointer-events-auto transform transition-all duration-300 translate-y-4 opacity-0 p-3.5 rounded-2xl shadow-xl border text-xs font-bold flex items-center gap-2.5 ${
+        type === 'error' ? 'bg-red-900 text-white border-red-700' : 'bg-brand-dark text-white border-brand-gold/40'
+    }`;
+    
+    const icon = type === 'error' ? '<i class="fa-solid fa-circle-exclamation text-red-400"></i>' : '<i class="fa-solid fa-heart text-red-500"></i>';
+    toast.innerHTML = `${icon} <span class="flex-1">${message}</span>`;
+
+    container.appendChild(toast);
+    
+    requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+    });
+
+    setTimeout(() => {
+        toast.classList.add('translate-y-4', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+    }, 2800);
+}
+
+async function toggleWishlist(e, productId) {
+    if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    if (!productId) return;
+
+    const buttons = document.querySelectorAll(`[data-product-id="${productId}"]`);
+
+    try {
+        const response = await fetch("{% url 'toggle_wishlist' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({ product_id: productId })
+        });
+
+        const data = await response.json();
+        if (data.status === 'success') {
+            const isAdded = data.action === 'added';
+            
+            buttons.forEach(btn => {
+                const icon = btn.querySelector('i');
+                if (isAdded) {
+                    btn.classList.add('text-red-500');
+                    btn.classList.remove('text-gray-400');
+                    if (icon) {
+                        icon.className = 'fa-solid fa-heart text-sm';
+                    }
+                    btn.classList.add('scale-125');
+                    setTimeout(() => btn.classList.remove('scale-125'), 200);
+                } else {
+                    btn.classList.remove('text-red-500');
+                    btn.classList.add('text-gray-400');
+                    if (icon) {
+                        icon.className = 'fa-regular fa-heart text-sm';
+                    }
+                }
+
+                const label = btn.querySelector('.wishlist-text-label');
+                if (label) {
+                    label.textContent = isAdded ? 'Saved in Wishlist' : 'Save to Wishlist';
+                }
+            });
+
+            updateHeaderWishlistCount(data.wishlist_count);
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message || 'Could not update Wishlist', 'error');
+        }
+    } catch (err) {
+        console.error('Wishlist toggle error:', err);
+        showToast('Network error updating Wishlist', 'error');
+    }
+}
+</script>
+
+{% block extra_scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block title %}Visit Our Showroom | SK Fashion Everything For Mens Ahilyanagar{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-br from-brand-dark via-slate-900 to-slate-950 text-white py-14">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-2xl">
+        <span class="text-xs font-bold uppercase tracking-widest text-amber-400">Flagship Menswear Showroom</span>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight mt-2">Visit SK Fashion in Ahilyanagar</h1>
+        <p class="text-slate-300 text-sm sm:text-base mt-3 leading-relaxed">
+            Experience premium menswear in person. Try the latest shirts, jeans, blazers, and festive wear with personalized assistance.
+        </p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Showroom Information Card (LEFT) -->
+        <div class="lg:col-span-5 space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xl space-y-6">
+                
+                <div class="border-b border-slate-100 pb-5">
+                    <span class="text-[10px] font-bold text-amber-600 uppercase tracking-widest block mb-1">Store Address</span>
+                    <h2 class="text-xl font-black text-slate-900 leading-tight">SK Fashion (Everything For Mens)</h2>
+                    <p class="text-xs text-slate-600 mt-2 leading-relaxed flex items-start gap-2">
+                        <i class="fa-solid fa-location-dot text-amber-600 mt-0.5 text-sm shrink-0"></i>
+                        <span>Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura city, Ahilyanagar (Ahmednagar), Maharashtra 414001</span>
+                    </p>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div class="flex items-center gap-3 text-slate-700">
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                            <i class="fa-regular fa-clock text-base"></i>
+                        </div>
+                        <div>
+                            <strong class="block text-slate-900 font-bold">Store Working Hours:</strong>
+                            <span>Open Daily: 10:00 AM – 10:00 PM</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-slate-700">
+                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-phone text-base"></i>
+                        </div>
+                        <div>
+                            <strong class="block text-slate-900 font-bold">Contact Number:</strong>
+                            <a href="tel:{{ store_settings.PHONE }}" class="text-blue-600 font-bold hover:underline">{{ store_settings.PHONE }}</a>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-3 text-slate-700">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                        </div>
+                        <div>
+                            <strong class="block text-slate-900 font-bold">WhatsApp Inquiries:</strong>
+                            <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="text-emerald-700 font-bold hover:underline">Chat with Store Team</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="pt-4 border-t border-slate-100 space-y-3">
+                    <a href="https://maps.google.com/?q=Delhi+Gate+Balikashram+Rd+Sarjepura+Ahmednagar" target="_blank"
+                       class="w-full bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-diamond-turn-right text-amber-400"></i>
+                        <span>Get Directions on Google Maps</span>
+                    </a>
+
+                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion,%20I%20am%20planning%20to%20visit%20your%20Delhi%20Gate%20showroom" target="_blank"
+                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>Ask About Today's In-Store Stock</span>
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- In-Store Services Card -->
+            <div class="bg-slate-50 rounded-3xl p-6 border border-slate-200 text-xs space-y-3">
+                <h3 class="font-bold text-slate-900 text-sm">Services Available In-Store:</h3>
+                <ul class="space-y-2 text-slate-600">
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Trial Rooms for comfortable sizing</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Custom trouser length alteration support</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Wedding & Festive bulk shopping discounts</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Instant UPI, Cash, Cards & WhatsApp Pay</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Google Map Interactive Embed (RIGHT) -->
+        <div class="lg:col-span-7">
+            <div class="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-xl h-96 lg:h-full min-h-[480px]">
+                <iframe 
+                    src="{{ store_settings.MAP_EMBED_URL }}" 
+                    width="100%" 
+                    height="100%" 
+                    style="border:0;" 
+                    allowfullscreen="" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

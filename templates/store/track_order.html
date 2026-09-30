@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Your Order | SK Fashion Everything For Mens{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="text-center max-w-xl mx-auto mb-8">
+        <span class="text-xs font-bold text-amber-600 uppercase tracking-widest">Order Status</span>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">Track Your Menswear Package</h1>
+        <p class="text-xs text-slate-500 mt-2">Enter your Order ID (e.g. SKF-12345678) or your 10-digit mobile number to view live status.</p>
+    </div>
+
+    <!-- Search Form -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm max-w-xl mx-auto mb-10">
+        <form method="GET" action="{% url 'track_order' %}" class="flex flex-col sm:flex-row gap-3">
+            <input type="text" name="order_query" value="{{ query|default:'' }}" required 
+                   placeholder="Enter Order ID or Phone Number"
+                   class="flex-1 text-xs px-4 py-3 rounded-xl border border-slate-300 focus:border-amber-500 outline-none">
+            <button type="submit" class="bg-slate-950 hover:bg-slate-800 text-white font-bold text-xs px-6 py-3 rounded-xl transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <span>Track Now</span>
+            </button>
+        </form>
+    </div>
+
+    <!-- Results Section -->
+    {% if searched %}
+        {% if order %}
+            <div class="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-lg space-y-8">
+                
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-6 border-b border-slate-100">
+                    <div>
+                        <span class="text-xs font-bold text-amber-600">Order ID: #{{ order.order_id }}</span>
+                        <h2 class="text-xl font-black text-slate-900 mt-0.5">{{ order.customer_name }}</h2>
+                        <span class="text-xs text-slate-400">Placed on {{ order.created_at|date:"M d, Y, h:i A" }}</span>
+                    </div>
+                    <div>
+                        <span class="inline-block bg-slate-900 text-white text-xs font-bold px-4 py-1.5 rounded-full">
+                            Status: {{ order.get_order_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PROGRESS STEPPER -->
+                <div class="py-4">
+                    <div class="grid grid-cols-4 gap-2 text-center text-xs">
+                        
+                        <!-- Step 1: Placed -->
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold bg-emerald-600 text-white shadow-md">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <span class="font-bold text-slate-900 block text-[11px]">Placed</span>
+                        </div>
+
+                        <!-- Step 2: Confirmed -->
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold {% if order.order_status != 'PLACED' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <span class="font-bold text-slate-900 block text-[11px]">Confirmed</span>
+                        </div>
+
+                        <!-- Step 3: Packed / Dispatched -->
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold {% if order.order_status in 'SHIPPED,OUT_FOR_DELIVERY,DELIVERED,READY_FOR_PICKUP' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i class="fa-solid fa-box"></i>
+                            </div>
+                            <span class="font-bold text-slate-900 block text-[11px]">Packed / Shipped</span>
+                        </div>
+
+                        <!-- Step 4: Delivered -->
+                        <div class="space-y-2">
+                            <div class="w-10 h-10 rounded-full mx-auto flex items-center justify-center font-bold {% if order.order_status == 'DELIVERED' %}bg-emerald-600 text-white shadow-md{% else %}bg-slate-200 text-slate-400{% endif %}">
+                                <i class="fa-solid fa-house-chimney"></i>
+                            </div>
+                            <span class="font-bold text-slate-900 block text-[11px]">Delivered</span>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Order Details Card -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                        <strong class="text-slate-900 block">Delivery Method:</strong>
+                        <p class="text-slate-600">{{ order.get_delivery_type_display }}</p>
+                        <p class="text-slate-500">{{ order.address_line }}, {{ order.city }} - {{ order.pincode }}</p>
+                    </div>
+                    <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+                        <strong class="text-slate-900 block">Payment:</strong>
+                        <p class="text-slate-600">{{ order.get_payment_method_display }}</p>
+                        <p class="text-slate-900 font-extrabold text-sm">Total: ₹{{ order.total_amount|floatformat:0 }}</p>
+                    </div>
+                </div>
+
+                <!-- Items in this order -->
+                <div class="space-y-2">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Items:</h4>
+                    <div class="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden text-xs">
+                        {% for item in order.items.all %}
+                            <div class="p-3 flex justify-between items-center bg-slate-50/50">
+                                <div>
+                                    <strong class="text-slate-900 block">{{ item.product_name }}</strong>
+                                    <span class="text-slate-400">Size: {{ item.size }} × {{ item.quantity }}</span>
+                                </div>
+                                <span class="font-bold text-slate-900">₹{{ item.total_price|floatformat:0 }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- WhatsApp Support -->
+                <div class="text-center pt-4 border-t border-slate-100">
+                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion,%20I%20have%20an%20inquiry%20regarding%20my%20Order%20#{{ order.order_id }}" 
+                       target="_blank"
+                       class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-bold text-xs">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                        <span>Need Help? Chat with SK Fashion Store Support</span>
+                    </a>
+                </div>
+
+            </div>
+        {% else %}
+            <div class="bg-white rounded-3xl border border-slate-200 p-10 text-center max-w-md mx-auto space-y-3">
+                <i class="fa-solid fa-circle-exclamation text-amber-500 text-3xl"></i>
+                <h3 class="text-base font-bold text-slate-900">No order found matching "{{ query }}"</h3>
+                <p class="text-xs text-slate-500">Please verify the Order ID or phone number used during checkout.</p>
+            </div>
+        {% endif %}
+    {% endif %}
+
+</div>
+{% endblock %}
