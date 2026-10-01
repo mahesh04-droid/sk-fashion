@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}SK Fashion - Everything For Mens | Ahilyanagar's Top Menswear{% endblock %}
+{% block title %}Sadguru Krupa - Everything For Mens | Ahilyanagar's Top Menswear{% endblock %}
 {% block content %}
 
 <!-- HERO -->
@@ -35,7 +35,7 @@
                 <div class="relative w-full max-w-sm sm:max-w-md">
                     <div class="absolute -inset-2 rounded-3xl blur-3xl opacity-25" style="background:linear-gradient(135deg,#b8862b,#d4a843);"></div>
                     <div class="relative rounded-2xl overflow-hidden border shadow-2xl" style="border-color:rgba(255,255,255,.08);aspect-ratio:3/4;">
-                        <img src="{% if banners %}{{ banners.first.banner_image }}{% else %}https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80{% endif %}" alt="SK Fashion" class="w-full h-full object-cover object-top hover:scale-105 transition duration-700">
+                        <img src="{% if banners %}{{ banners.first.banner_image }}{% else %}https://images.unsplash.com/photo-1617137984095-74e4e5e3613f?auto=format&fit=crop&w=800&q=80{% endif %}" alt="Sadguru Krupa" class="w-full h-full object-cover object-top hover:scale-105 transition duration-700">
                         <div class="absolute bottom-0 left-0 right-0 p-4 flex items-center justify-between gap-3" style="background:linear-gradient(to top,rgba(0,0,0,.9) 0%,transparent 100%);padding-top:40px;">
                             <div>
                                 <span class="block font-bold" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#d4a843;">{% if banners %}{{ banners.first.badge }}{% else %}Festive &amp; Wedding Range{% endif %}</span>
@@ -139,7 +139,7 @@
                 <h2 class="font-display text-white font-bold" style="font-size:clamp(1.6rem,3.5vw,2.4rem);">Visit Our Ahilyanagar Store</h2>
                 <p class="text-gray-300 leading-relaxed" style="font-size:14px;">Experience premium fabrics, perfect fits, and personal styling advice at our flagship outlet.</p>
                 <div class="rounded-2xl p-5 border space-y-4" style="background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.1);">
-                    <div class="flex items-start gap-3"><i class="fa-solid fa-location-dot mt-0.5 flex-shrink-0" style="color:#d4a843;font-size:14px;"></i><div><strong class="block text-white font-bold" style="font-size:14px;">SK Fashion</strong><p class="text-gray-400 mt-0.5" style="font-size:12px;">Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura city, Ahilyanagar (Ahmednagar), Maharashtra 414001</p></div></div>
+                    <div class="flex items-start gap-3"><i class="fa-solid fa-location-dot mt-0.5 flex-shrink-0" style="color:#d4a843;font-size:14px;"></i><div><strong class="block text-white font-bold" style="font-size:14px;">Sadguru Krupa</strong><p class="text-gray-400 mt-0.5" style="font-size:12px;">Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura city, Ahilyanagar (Ahmednagar), Maharashtra 414001</p></div></div>
                     <div class="flex items-center gap-3 text-gray-400 pt-3 border-t" style="border-color:rgba(255,255,255,.08);font-size:12px;"><i class="fa-regular fa-clock" style="color:#d4a843;"></i><span>Open 7 Days: 10:00 AM &ndash; 10:00 PM</span></div>
                     <div class="flex items-center gap-3 text-gray-400" style="font-size:12px;"><i class="fa-solid fa-phone" style="color:#d4a843;font-size:11px;"></i><a href="tel:{{ store_settings.PHONE }}" class="hover:text-brand-gold2 transition-colors font-bold" style="color:#d4a843;">{{ store_settings.PHONE }}</a></div>
                 </div>

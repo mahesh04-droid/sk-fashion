@@ -13,7 +13,11 @@ class Category(models.Model):
     icon = models.CharField(max_length=50, default='shirt', help_text='Icon keyword (e.g. shirt, scissors, sparkle)')
     image_url = models.CharField(max_length=500, blank=True)
     is_featured = models.BooleanField(default=True)
-    order = models.PositiveIntegerField(default=0)
+    order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Display Order / Sequence',
+        help_text='Menu sorting position (e.g. 1 = first, 2 = second). Lower numbers appear first on the website.'
+    )
 
     class Meta:
         verbose_name_plural = 'Categories'
@@ -234,6 +238,20 @@ class Order(models.Model):
     payment_method = models.CharField(max_length=30, choices=PAYMENT_CHOICES, default='RAZORPAY')
     payment_status = models.CharField(max_length=30, choices=PAYMENT_STATUS_CHOICES, default='PENDING')
     order_status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES, default='PLACED')
+
+    CALL_VERIFICATION_CHOICES = [
+        ('PENDING', 'Pending Call'),
+        ('VERIFIED', 'Call Verified & Confirmed'),
+        ('UNREACHABLE', 'Unreachable / Not Answering'),
+        ('FAKE', 'Fake / Invalid Order'),
+    ]
+    call_verification_status = models.CharField(
+        max_length=20,
+        choices=CALL_VERIFICATION_CHOICES,
+        default='PENDING',
+        help_text='Phone verification status before packing'
+    )
+    call_notes = models.CharField(max_length=255, blank=True, help_text='Staff call verification notes')
 
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     delivery_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)

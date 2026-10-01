@@ -122,13 +122,13 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Store specific configuration
 STORE_SETTINGS = {
-    'NAME': 'SK Fashion',
+    'NAME': 'Sadguru Krupa',
     'TAGLINE': 'Everything For Mens',
     'TAGLINE_MR': 'पुरुषांसाठी सर्वकाही एकाच छताखाली',
     'ADDRESS': 'Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura, Ahilyanagar (Ahmednagar), Maharashtra 414001',
     'PHONE': '+91 98765 43210',
     'WHATSAPP_NUMBER': '919876543210',
-    'EMAIL': 'contact@skfashionmens.com',
+    'EMAIL': 'contact@sadgurukrupamens.com',
     'MAP_EMBED_URL': 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3770.0898867339174!2d74.7335!3d19.0965!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bdcb061329c36d7%3A0x6a0c5db6175e1194!2sDelhi%20Gate%2C%20Sarjepura%2C%20Ahilyanagar%2C%20Maharashtra%20414001!5e0!3m2!1sen!2sin!4v1710000000000!5m2!1sen!2sin',
     'TIMINGS': 'Open Daily: 10:00 AM - 10:00 PM',
 }
@@ -141,5 +141,5 @@ RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'k3VYWYkA6gDUREtrGDM8xA5y
 
 # Store UPI / Direct QR Payment Settings
 STORE_UPI_ID = os.getenv('STORE_UPI_ID', 'maheshkekan13-2@0kaxis')
-STORE_UPI_NAME = os.getenv('STORE_UPI_NAME', 'SK Fashion Menswear')
+STORE_UPI_NAME = os.getenv('STORE_UPI_NAME', 'Sadguru Krupa')
 

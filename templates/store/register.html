@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Create Account | SK Fashion Ahilyanagar{% endblock %}
+{% block title %}Create Account | Sadguru Krupa Ahilyanagar{% endblock %}
 
 {% block content %}
 <div class="max-w-md mx-auto px-4 py-12 sm:py-16">
@@ -45,6 +45,7 @@
                 <div class="relative">
                     <span class="absolute left-3.5 top-2.5 text-xs font-bold text-gray-400">+91</span>
                     <input type="tel" name="phone" value="{{ phone|default:'' }}" required maxlength="10" placeholder="9876543210"
+                           pattern="^[6-9]\d{9}$" title="Enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9"
                            class="inp w-full pl-12 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-surface text-xs transition-all focus:bg-white focus:border-brand-gold">
                 </div>
                 <p class="text-[10px] text-gray-400 mt-1">Previous orders with this number will automatically appear in your account.</p>

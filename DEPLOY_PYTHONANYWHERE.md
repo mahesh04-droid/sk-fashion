@@ -1,6 +1,6 @@
-# 🚀 How to Deploy SK Fashion on PythonAnywhere (Step-by-Step)
+# 🚀 How to Deploy Sadguru Krupa on PythonAnywhere (Step-by-Step)
 
-This guide walks you through deploying **SK Fashion** to [PythonAnywhere](https://www.pythonanywhere.com/) using your GitHub repository:
+This guide walks you through deploying **Sadguru Krupa** to [PythonAnywhere](https://www.pythonanywhere.com/) using your GitHub repository:
 👉 `https://github.com/mahesh04-droid/sk-fashion.git`
 
 ---
@@ -136,4 +136,4 @@ Scroll to the very top of the **Web** tab and click the big green **"Reload your
 Now click your web app link:
 👉 `https://yourusername.pythonanywhere.com/`
 
-Your **SK Fashion** store is now live on the internet! 🚀
+Your **Sadguru Krupa** store is now live on the internet! 🚀

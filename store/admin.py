@@ -68,15 +68,18 @@ class CustomerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('order_id', 'user', 'customer_name', 'customer_phone', 'delivery_type', 'payment_method', 'payment_status', 'order_status', 'total_amount', 'created_at')
-    list_filter = ('order_status', 'payment_status', 'payment_method', 'delivery_type', 'created_at')
-    list_editable = ('order_status', 'payment_status')
+    list_display = ('order_id', 'call_verification_status', 'customer_name', 'customer_phone', 'delivery_type', 'payment_status', 'order_status', 'total_amount', 'created_at')
+    list_filter = ('call_verification_status', 'order_status', 'payment_status', 'payment_method', 'delivery_type', 'created_at')
+    list_editable = ('call_verification_status', 'order_status', 'payment_status')
     search_fields = ('order_id', 'customer_name', 'customer_phone', 'city', 'pincode', 'razorpay_payment_id', 'upi_transaction_id')
     readonly_fields = ('order_id', 'created_at', 'updated_at', 'total_amount', 'razorpay_order_id', 'razorpay_payment_id', 'razorpay_signature')
     inlines = [OrderItemInline]
     fieldsets = (
         ('Order Identification', {
             'fields': ('order_id', 'order_status', 'created_at', 'updated_at')
+        }),
+        ('Verification & Anti-Fake Call Control', {
+            'fields': ('call_verification_status', 'call_notes')
         }),
         ('Customer Details', {
             'fields': ('user', 'customer_name', 'customer_phone', 'customer_email')

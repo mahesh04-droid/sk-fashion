@@ -1,3 +1,4 @@
+import re
 import json
 import urllib.parse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -12,6 +13,38 @@ from datetime import timedelta
 from django.conf import settings
 import razorpay
 from .models import Category, Product, ProductVariant, StoreBanner, Order, OrderItem, CustomerReview, Coupon, CustomerProfile
+
+
+def _validate_customer_contact(customer_phone, delivery_type, pincode, address_line):
+    """
+    Strict validation for anti-fake order protection:
+    - 10-digit Indian mobile number starting with 6, 7, 8, or 9
+    - Rejects dummy/repetitive numbers (e.g. 0000000000, 9999999999, 1234567890)
+    - Valid 6-digit Indian PIN code for home delivery
+    - Complete street address with at least 8 characters
+    """
+    raw_phone = str(customer_phone or '').strip()
+    clean_phone = re.sub(r'\D', '', raw_phone)
+    if clean_phone.startswith('91') and len(clean_phone) == 12:
+        clean_phone = clean_phone[2:]
+
+    DUMMY_PHONES = {
+        '0000000000', '1111111111', '2222222222', '3333333333', '4444444444',
+        '5555555555', '6666666666', '7777777777', '8888888888', '9999999999',
+        '1234567890', '0123456789', '9876543210'
+    }
+
+    if not re.match(r'^[6-9]\d{9}$', clean_phone) or clean_phone in DUMMY_PHONES:
+        return False, clean_phone, 'Please enter a genuine 10-digit Indian mobile number starting with 6, 7, 8, or 9.'
+
+    if delivery_type == 'HOME_DELIVERY':
+        clean_pin = re.sub(r'\D', '', str(pincode or ''))
+        if not re.match(r'^[1-9]\d{5}$', clean_pin):
+            return False, clean_phone, 'Please enter a valid 6-digit Indian postal PIN code (e.g. 414001).'
+        if len((address_line or '').strip()) < 8:
+            return False, clean_phone, 'Please enter a complete delivery address (House/Shop No, Street, Landmark) with at least 8 characters.'
+
+    return True, clean_phone, ''
 
 
 def home(request):
@@ -91,7 +124,7 @@ def product_detail(request, slug):
 
     # Generate WhatsApp pre-filled order text
     store_phone = getattr(settings, 'STORE_SETTINGS', {}).get('WHATSAPP_NUMBER', '919876543210')
-    default_text = f"Hello SK Fashion! I want to order:\n\n👕 Item: {product.name}\n💰 Price: ₹{product.discount_price}\n📍 Deliver to: [Please enter your City/Address]\n\nPlease confirm size availability!"
+    default_text = f"Hello Sadguru Krupa! I want to order:\n\n👕 Item: {product.name}\n💰 Price: ₹{product.discount_price}\n📍 Deliver to: [Please enter your City/Address]\n\nPlease confirm size availability!"
     whatsapp_url = f"https://wa.me/{store_phone}?text={urllib.parse.quote(default_text)}"
 
     context = {
@@ -435,7 +468,7 @@ def checkout(request):
 
     razorpay_key_id = getattr(settings, 'RAZORPAY_KEY_ID', 'rzp_test_skfashion_demo')
     store_upi_id = getattr(settings, 'STORE_UPI_ID', 'skfashion@oksbi')
-    store_upi_name = getattr(settings, 'STORE_UPI_NAME', 'SK Fashion Menswear')
+    store_upi_name = getattr(settings, 'STORE_UPI_NAME', 'Sadguru Krupa')
 
     if request.method == 'POST':
         customer_name = request.POST.get('customer_name', '').strip()
@@ -458,6 +491,17 @@ def checkout(request):
             state = request.POST.get('state', 'Maharashtra').strip()
             pincode = request.POST.get('pincode', '414001').strip()
 
+        # Strict anti-fake customer validation
+        if not customer_name or len(customer_name) < 2:
+            messages.error(request, 'Please enter your full name (at least 2 characters).')
+            return redirect('checkout')
+
+        is_valid, clean_phone, error_msg = _validate_customer_contact(customer_phone, delivery_type, pincode, address_line)
+        if not is_valid:
+            messages.error(request, error_msg)
+            return redirect('checkout')
+
+        customer_phone = clean_phone
         payment_method = request.POST.get('payment_method', 'RAZORPAY').strip()
         upi_transaction_id = request.POST.get('upi_transaction_id', '').strip()
         notes = request.POST.get('notes', '').strip()
@@ -486,6 +530,7 @@ def checkout(request):
             payment_method=payment_method,
             payment_status=payment_status,
             order_status=order_status,
+            call_verification_status='PENDING',
             subtotal=subtotal,
             coupon_code=applied_coupon.code if applied_coupon else '',
             discount_amount=discount_amount,
@@ -569,8 +614,8 @@ def create_razorpay_order(request):
     customer_email = data.get('customer_email', '').strip()
     raw_delivery_type = data.get('delivery_type', 'HOME_DELIVERY').strip().upper()
 
-    if not customer_name or not customer_phone:
-        return JsonResponse({'status': 'error', 'message': 'Please provide your name and phone number.'}, status=400)
+    if not customer_name or len(customer_name) < 2:
+        return JsonResponse({'status': 'error', 'message': 'Please provide your full name (at least 2 characters).'}, status=400)
 
     if 'STORE_PICKUP' in raw_delivery_type:
         delivery_type = 'STORE_PICKUP'
@@ -586,9 +631,13 @@ def create_razorpay_order(request):
         city = data.get('city', 'Ahilyanagar').strip()
         state = data.get('state', 'Maharashtra').strip()
         pincode = data.get('pincode', '414001').strip()
-        if not address_line or not pincode:
-            return JsonResponse({'status': 'error', 'message': 'Please provide delivery address and PIN code.'}, status=400)
 
+    # Strict anti-fake customer validation
+    is_valid, clean_phone, error_msg = _validate_customer_contact(customer_phone, delivery_type, pincode, address_line)
+    if not is_valid:
+        return JsonResponse({'status': 'error', 'message': error_msg}, status=400)
+
+    customer_phone = clean_phone
     notes = data.get('notes', '').strip()
     grand_total = max(0, subtotal - discount_amount + delivery_charge)
 
@@ -605,6 +654,7 @@ def create_razorpay_order(request):
         payment_method='RAZORPAY',
         payment_status='PENDING',
         order_status='PLACED',
+        call_verification_status='PENDING',
         subtotal=subtotal,
         coupon_code=applied_coupon.code if applied_coupon else '',
         discount_amount=discount_amount,
@@ -670,10 +720,10 @@ def create_razorpay_order(request):
         'is_sandbox': is_sandbox,
         'amount': amount_in_paise,
         'currency': 'INR',
-        'name': 'SK Fashion',
+        'name': 'Sadguru Krupa',
         'description': f'Order #{order.order_id} - Menswear',
         'customer_name': order.customer_name,
-        'customer_email': order.customer_email or 'customer@skfashionmens.com',
+        'customer_email': order.customer_email or 'customer@sadgurukrupamens.com',
         'customer_phone': order.customer_phone,
     })
 
@@ -816,7 +866,7 @@ def order_success(request, order_id):
     
     # Pre-formatted WhatsApp confirmation
     msg = (
-        f"Hello SK Fashion! I have placed Order #{order.order_id} on your website.\n"
+        f"Hello Sadguru Krupa! I have placed Order #{order.order_id} on your website.\n"
         f"👤 Customer: {order.customer_name} ({order.customer_phone})\n"
         f"💰 Total Amount: ₹{order.total_amount}\n"
         f"📦 Delivery: {order.get_delivery_type_display()}\n"
@@ -826,8 +876,8 @@ def order_success(request, order_id):
     whatsapp_confirm_url = f"https://wa.me/{store_phone}?text={urllib.parse.quote(msg)}"
 
     store_upi_id = getattr(settings, 'STORE_UPI_ID', 'skfashion@oksbi')
-    store_upi_name = getattr(settings, 'STORE_UPI_NAME', 'SK Fashion Menswear')
-    upi_intent_url = f"upi://pay?pa={store_upi_id}&pn={urllib.parse.quote(store_upi_name)}&am={order.total_amount:.2f}&cu=INR&tn=SKF_{order.order_id}"
+    store_upi_name = getattr(settings, 'STORE_UPI_NAME', 'Sadguru Krupa')
+    upi_intent_url = f"upi://pay?pa={store_upi_id}&pn={urllib.parse.quote(store_upi_name)}&am={order.total_amount:.2f}&cu=INR&tn=SK_{order.order_id}"
 
     context = {
         'order': order,
@@ -866,7 +916,7 @@ def store_locator(request):
 
 def service_worker(request):
     from django.http import HttpResponse
-    return HttpResponse("// SK Fashion Service Worker", content_type="application/javascript")
+    return HttpResponse("// Sadguru Krupa Service Worker", content_type="application/javascript")
 
 
 def customer_register(request):
@@ -886,9 +936,11 @@ def customer_register(request):
             messages.error(request, 'Please enter your full name.')
             return render(request, 'store/register.html', {'full_name': full_name, 'phone': phone, 'email': email, 'next': next_url})
 
-        if not phone or len(phone) < 10:
-            messages.error(request, 'Please enter a valid 10-digit mobile number.')
+        is_valid, clean_phone, error_msg = _validate_customer_contact(phone, 'STORE_PICKUP', '', '')
+        if not is_valid:
+            messages.error(request, error_msg)
             return render(request, 'store/register.html', {'full_name': full_name, 'phone': phone, 'email': email, 'next': next_url})
+        phone = clean_phone
 
         if len(password) < 6:
             messages.error(request, 'Password must be at least 6 characters long.')
@@ -922,7 +974,7 @@ def customer_register(request):
         Order.objects.filter(customer_phone__icontains=phone, user__isnull=True).update(user=user)
 
         login(request, user)
-        messages.success(request, f"Welcome to SK Fashion, {full_name}! Your account has been created.")
+        messages.success(request, f"Welcome to Sadguru Krupa, {full_name}! Your account has been created.")
         return redirect(next_url)
 
     return render(request, 'store/register.html', {'next': next_url})
@@ -1061,7 +1113,7 @@ def staff_or_admin_required(view_func):
             messages.warning(request, 'Please sign in with your store staff account to access the Store Manager Dashboard.')
             return redirect(f"/account/login/?next={request.path}")
         if not (request.user.is_staff or request.user.is_superuser):
-            messages.error(request, 'Access restricted to SK Fashion store management.')
+            messages.error(request, 'Access restricted to Sadguru Krupa store management.')
             return redirect('home')
         return view_func(request, *args, **kwargs)
     return _wrapped_view
@@ -1155,6 +1207,7 @@ def store_manager_dashboard(request):
         'recent_reviews': recent_reviews,
         'order_status_choices': Order.ORDER_STATUS_CHOICES,
         'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
+        'call_verification_choices': Order.CALL_VERIFICATION_CHOICES,
     }
     return render(request, 'store/store_manager.html', context)
 
@@ -1186,6 +1239,64 @@ def manager_update_order_status(request):
         'order_status_display': order.get_order_status_display(),
         'payment_status': order.payment_status,
         'payment_status_display': order.get_payment_status_display(),
+    })
+
+
+@staff_or_admin_required
+def manager_update_call_verification(request):
+    """
+    Manager endpoint to verify orders by phone call before dispatching:
+    - PENDING: Needs Call
+    - VERIFIED: Spoke to customer, confirmed fit/address (auto-promotes to CONFIRMED)
+    - UNREACHABLE: No answer
+    - FAKE: Prank / Invalid (cancels order and restores stock!)
+    """
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    order_id = data.get('order_id')
+    new_call_status = data.get('call_status', '').strip().upper()
+    call_notes = data.get('call_notes', '').strip()
+
+    order = get_object_or_404(Order, order_id=order_id)
+    valid_statuses = dict(Order.CALL_VERIFICATION_CHOICES)
+
+    if new_call_status not in valid_statuses:
+        return JsonResponse({'status': 'error', 'message': 'Invalid call verification status.'}, status=400)
+
+    order.call_verification_status = new_call_status
+    if call_notes:
+        order.call_notes = call_notes
+
+    # Business Anti-Fake logic:
+    if new_call_status == 'VERIFIED':
+        if order.order_status == 'PLACED':
+            order.order_status = 'CONFIRMED'
+    elif new_call_status == 'FAKE':
+        # Prank / fake order: cancel and restore stock immediately
+        if order.order_status != 'CANCELLED':
+            order.order_status = 'CANCELLED'
+            for item in order.items.all():
+                if item.product:
+                    variant = ProductVariant.objects.filter(product=item.product, size=item.size).first()
+                    if variant:
+                        variant.stock_quantity += item.quantity
+                        variant.save(update_fields=['stock_quantity'])
+
+    order.save()
+
+    return JsonResponse({
+        'status': 'success',
+        'message': f'Call status for #{order.order_id} updated to {order.get_call_verification_status_display()}.',
+        'order_id': order.order_id,
+        'call_verification_status': order.call_verification_status,
+        'call_verification_display': order.get_call_verification_status_display(),
+        'order_status': order.order_status,
+        'order_status_display': order.get_order_status_display(),
     })
 
 

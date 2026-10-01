@@ -29,6 +29,7 @@ urlpatterns = [
     path('store-locator/', views.store_locator, name='store_locator'),
     path('store-manager/', views.store_manager_dashboard, name='store_manager'),
     path('store-manager/order/status/', views.manager_update_order_status, name='manager_update_order_status'),
+    path('store-manager/order/call-verification/', views.manager_update_call_verification, name='manager_update_call_verification'),
     path('store-manager/stock/update/', views.manager_update_stock, name='manager_update_stock'),
     path('store-manager/review/toggle/', views.manager_toggle_review, name='manager_toggle_review'),
     path('store-manager/pos/', views.pos_terminal, name='pos_terminal'),

@@ -1,6 +1,6 @@
-# 🛍️ SK FASHION (Everything For Mens) - E-Commerce Platform
+# 🛍️ SADGURU KRUPA (Everything For Mens) - E-Commerce Platform
 
-Official digital storefront and full-stack e-commerce web platform for **SK Fashion**, Ahilyanagar's premier menswear showroom located at:
+Official digital storefront and full-stack e-commerce web platform for **Sadguru Krupa**, Ahilyanagar's premier menswear showroom located at:
 > **Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura, Ahilyanagar (Ahmednagar), Maharashtra 414001**
 
 Built with **Django 6**, **Tailwind CSS**, **SQLite/PostgreSQL**, and integrated with **Razorpay Payments** and **WhatsApp Commerce**.
@@ -109,4 +109,4 @@ Visit **http://127.0.0.1:8000/admin/**
 ---
 
 ## 📄 License
-This project is proprietary to **SK Fashion (Everything For Mens)**, Ahilyanagar, Maharashtra. All rights reserved.
+This project is proprietary to **Sadguru Krupa (Everything For Mens)**, Ahilyanagar, Maharashtra. All rights reserved.

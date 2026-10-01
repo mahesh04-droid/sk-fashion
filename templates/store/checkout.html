@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Secure Checkout | SK Fashion Ahilyanagar{% endblock %}
+{% block title %}Secure Checkout | Sadguru Krupa Ahilyanagar{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
@@ -68,13 +68,18 @@
                                    class="inp w-full text-sm px-4 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-700 block mb-1.5">Mobile Number *</label>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label class="text-xs font-bold text-gray-700">Mobile Number *</label>
+                                <span id="phoneValidationStatus" class="text-[10px] font-semibold text-gray-400">10 digits (6-9)</span>
+                            </div>
                             <div class="relative">
                                 <span class="absolute left-3.5 top-2.5 text-xs font-bold text-gray-400">+91</span>
                                 <input type="tel" name="customer_phone" id="customer_phone" required placeholder="9876543210" maxlength="10"
                                        value="{% if request.user.is_authenticated %}{{ request.user.profile.phone|default:'' }}{% endif %}"
-                                       class="inp w-full text-sm pl-12 pr-4 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                                       class="inp w-full text-sm pl-12 pr-10 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
+                                <span id="phoneValidIcon" class="absolute right-3.5 top-2.5 text-xs hidden"></span>
                             </div>
+                            <p id="phoneErrorHelp" class="text-[10px] text-red-600 mt-1 hidden"></p>
                         </div>
                     </div>
 
@@ -140,10 +145,14 @@
                         </div>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                             <div>
-                                <label class="text-xs font-bold text-gray-700 block mb-1.5">PIN Code *</label>
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <label class="text-xs font-bold text-gray-700">PIN Code *</label>
+                                    <span id="pinValidationStatus" class="text-[10px] font-semibold text-gray-400">6 digits</span>
+                                </div>
                                 <input type="text" name="pincode" id="pincode" maxlength="6"
                                        value="{% if request.user.is_authenticated and request.user.profile.pincode %}{{ request.user.profile.pincode }}{% else %}414001{% endif %}" placeholder="414001"
                                        class="inp w-full text-sm px-4 py-2.5 rounded-xl border border-brand-border transition-all">
+                                <p id="pincodeHelper" class="text-[10px] text-gray-500 mt-1 font-medium"></p>
                             </div>
                             <div>
                                 <label class="text-xs font-bold text-gray-700 block mb-1.5">City</label>
@@ -163,7 +172,7 @@
                     <!-- Store Pickup Details (shown when Store Pickup selected) -->
                     <div id="pickupNotice" class="hidden p-4 rounded-xl border bg-amber-50/60 border-amber-200 text-xs text-amber-900 space-y-1.5">
                         <div class="font-bold flex items-center gap-1.5 text-sm text-amber-950">
-                            <i class="fa-solid fa-location-dot text-brand-gold"></i> SK Fashion Delhi Gate Showroom
+                            <i class="fa-solid fa-location-dot text-brand-gold"></i> Sadguru Krupa Delhi Gate Showroom
                         </div>
                         <p class="leading-relaxed">Shop No 01, Delhi Gate, Balikashram Rd, Sarjepura, Ahilyanagar (Ahmednagar), Maharashtra 414001</p>
                         <p class="text-amber-800 font-semibold"><i class="fa-regular fa-clock"></i> Open 10:00 AM – 10:00 PM Daily &bull; Phone: +91 98765 43210</p>
@@ -263,7 +272,7 @@
                         <div id="upiQrSection" class="hidden p-5 rounded-2xl border border-brand-border bg-brand-surface space-y-4">
                             <div class="text-center sm:flex sm:items-center sm:gap-6 sm:text-left">
                                 <div class="w-40 h-40 mx-auto sm:mx-0 p-2 bg-white rounded-2xl border border-brand-border shadow-md flex items-center justify-center flex-shrink-0">
-                                    <img id="dynamicQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ upi_intent_string|urlencode }}" alt="SK Fashion UPI QR" class="w-full h-full object-contain">
+                                    <img id="dynamicQrImage" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data={{ upi_intent_string|urlencode }}" alt="Sadguru Krupa UPI QR" class="w-full h-full object-contain">
                                 </div>
                                 <div class="mt-4 sm:mt-0 space-y-2.5 flex-1">
                                     <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-brand-gold bg-amber-50 px-2 py-0.5 rounded">Store Official UPI</span>
@@ -415,7 +424,7 @@
                     Sandbox Simulator
                 </span>
             </div>
-            <div class="text-xs text-blue-200/80 mb-0.5">Paying to <strong>SK Fashion Menswear</strong></div>
+            <div class="text-xs text-blue-200/80 mb-0.5">Paying to <strong>Sadguru Krupa</strong></div>
             <div class="font-display font-black text-2xl text-white tracking-tight" id="simModalAmount">&#8377;0</div>
             <button type="button" onclick="closeRazorpaySimulator()" class="absolute top-5 right-5 text-blue-200/70 hover:text-white text-lg">
                 <i class="fa-solid fa-xmark"></i>
@@ -709,17 +718,95 @@ async function handleRemoveCoupon() {
     }
 }
 
+// Strict Indian Mobile & PIN Validation
+function validateIndianPhone(phoneStr) {
+    const clean = (phoneStr || '').replace(/\D/g, '');
+    const num = (clean.startsWith('91') && clean.length === 12) ? clean.substring(2) : clean;
+    const dummy = ['0000000000', '1111111111', '2222222222', '3333333333', '4444444444', '5555555555', '6666666666', '7777777777', '8888888888', '9999999999', '1234567890', '0123456789', '9876543210'];
+    if (num.length === 0) return { valid: false, message: 'Mobile number is required.' };
+    if (num.length < 10) return { valid: false, message: `Enter 10 digits (${num.length}/10)` };
+    if (!/^[6-9]/.test(num)) return { valid: false, message: 'Must start with 6, 7, 8, or 9' };
+    if (dummy.includes(num)) return { valid: false, message: 'Enter a genuine active mobile number' };
+    return { valid: true, clean: num };
+}
+
+// Live Phone Validation Listener
+const phoneInp = document.getElementById('customer_phone');
+const phoneStatus = document.getElementById('phoneValidationStatus');
+const phoneIcon = document.getElementById('phoneValidIcon');
+const phoneHelp = document.getElementById('phoneErrorHelp');
+
+if (phoneInp) {
+    phoneInp.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').substring(0, 10);
+        const res = validateIndianPhone(this.value);
+        if (res.valid) {
+            phoneStatus.innerHTML = '<span class="text-green-600 font-bold">✓ Valid Mobile</span>';
+            phoneIcon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500"></i>';
+            phoneIcon.classList.remove('hidden');
+            phoneHelp.classList.add('hidden');
+            this.classList.remove('border-red-400');
+            this.classList.add('border-green-400');
+        } else {
+            phoneIcon.classList.add('hidden');
+            if (this.value.length > 0) {
+                phoneStatus.innerHTML = `<span class="text-amber-600">${this.value.length}/10 digits</span>`;
+                phoneHelp.textContent = res.message;
+                phoneHelp.classList.remove('hidden');
+                this.classList.add('border-red-400');
+                this.classList.remove('border-green-400');
+            } else {
+                phoneStatus.textContent = '10 digits (6-9)';
+                phoneHelp.classList.add('hidden');
+                this.classList.remove('border-red-400', 'border-green-400');
+            }
+        }
+    });
+}
+
+// Live PIN Code Validation Listener
+const pinInp = document.getElementById('pincode');
+const pinStatus = document.getElementById('pinValidationStatus');
+const pinHelper = document.getElementById('pincodeHelper');
+
+if (pinInp) {
+    pinInp.addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').substring(0, 6);
+        if (this.value.length === 6) {
+            if (this.value.startsWith('414')) {
+                pinStatus.innerHTML = '<span class="text-green-600 font-bold">✓ Local PIN</span>';
+                pinHelper.innerHTML = '<span class="text-emerald-700 font-bold"><i class="fa-solid fa-bolt text-amber-500 mr-1"></i>Ahilyanagar &amp; Ahmednagar District (Fast 24h Delivery)</span>';
+            } else {
+                pinStatus.innerHTML = '<span class="text-blue-600 font-bold">✓ Valid PIN</span>';
+                pinHelper.innerHTML = '<span class="text-blue-700 font-bold"><i class="fa-solid fa-truck-fast mr-1"></i>Express Pan-India Doorstep Shipping</span>';
+            }
+        } else {
+            pinStatus.textContent = `${this.value.length}/6 digits`;
+            pinHelper.innerHTML = '';
+        }
+    });
+}
+
 // Checkout Form Submission & Razorpay Integration
 document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
     const radios = document.querySelectorAll('input[name="payment_method"]');
     let paymentMethod = 'RAZORPAY';
     radios.forEach(r => { if (r.checked) paymentMethod = r.value; });
 
-    // Validate Contact Details
+    // Validate Contact Details strictly
     const name = document.getElementById('customer_name').value.trim();
     const phone = document.getElementById('customer_phone').value.trim();
-    if (!name || phone.length < 10) {
-        showAlert('Please provide a valid full name and 10-digit phone number.', true);
+    if (!name || name.length < 2) {
+        showAlert('Please provide your full name (at least 2 characters).', true);
+        document.getElementById('customer_name').focus();
+        e.preventDefault();
+        return;
+    }
+
+    const phoneCheck = validateIndianPhone(phone);
+    if (!phoneCheck.valid) {
+        showAlert(phoneCheck.message, true);
+        document.getElementById('customer_phone').focus();
         e.preventDefault();
         return;
     }
@@ -727,8 +814,15 @@ document.getElementById('checkoutForm').addEventListener('submit', async functio
     if (!isStorePickup) {
         const addr = document.getElementById('address_line').value.trim();
         const pin = document.getElementById('pincode').value.trim();
-        if (!addr || pin.length < 6) {
-            showAlert('Please provide your complete delivery address and 6-digit PIN code.', true);
+        if (!addr || addr.length < 8) {
+            showAlert('Please provide a complete delivery address (House/Shop No, Street, Landmark) with at least 8 characters.', true);
+            document.getElementById('address_line').focus();
+            e.preventDefault();
+            return;
+        }
+        if (pin.length !== 6 || !/^[1-9]\d{5}$/.test(pin)) {
+            showAlert('Please enter a valid 6-digit Indian delivery PIN code (e.g. 414001).', true);
+            document.getElementById('pincode').focus();
             e.preventDefault();
             return;
         }
