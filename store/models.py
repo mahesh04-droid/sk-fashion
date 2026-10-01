@@ -187,11 +187,15 @@ class Order(models.Model):
     DELIVERY_CHOICES = [
         ('HOME_DELIVERY', 'Express Home Delivery'),
         ('STORE_PICKUP', 'Store Pickup (Delhi Gate, Ahilyanagar Showroom)'),
+        ('COUNTER_SALE', 'Showroom Walk-in Sale (Delhi Gate Counter)'),
     ]
 
     PAYMENT_CHOICES = [
         ('RAZORPAY', 'Razorpay Online (Cards / UPI / NetBanking / Wallets)'),
         ('UPI_QR', 'Scan & Pay (Instant UPI QR)'),
+        ('IN_STORE_CASH', 'Showroom Cash Payment'),
+        ('IN_STORE_UPI', 'Showroom Counter UPI (GPay / PhonePe QR Standee)'),
+        ('IN_STORE_CARD', 'Showroom Card Swipe Machine'),
         ('UPI_ONLINE', 'UPI / Online Payment'),
         ('COD', 'Cash on Delivery (COD)'),
         ('WHATSAPP_ORDER', 'Confirmed via WhatsApp Chat'),

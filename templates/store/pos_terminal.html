@@ -1,0 +1,683 @@
+{% extends 'base.html' %}
+{% block title %}Showroom POS Counter Billing | SK Fashion Ahilyanagar{% endblock %}
+
+{% block extra_head %}
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #thermalReceiptModal, #thermalReceiptModal * {
+            visibility: visible;
+        }
+        #thermalReceiptModal {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 80mm;
+            padding: 0;
+            margin: 0;
+            box-shadow: none !important;
+            background: #fff !important;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+    .pos-product-card:hover {
+        border-color: #b8862b;
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-brand-surface min-h-screen py-6 border-b border-brand-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Top POS Bar -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-brand-border shadow-sm">
+            <div class="flex items-center gap-4">
+                <a href="{% url 'store_manager' %}" class="w-10 h-10 rounded-2xl bg-brand-surface hover:bg-gray-200 border border-brand-border flex items-center justify-center text-brand-dark transition-colors" title="Back to Dashboard">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </a>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-brand-gold">Delhi Gate Showroom Counter</span>
+                    </div>
+                    <h1 class="font-display font-bold text-brand-dark text-xl sm:text-2xl">
+                        POS Express Billing &amp; Inventory Sync
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Today's Counter Sales Metrics -->
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-2 text-right">
+                    <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Today's Counter Sales</span>
+                    <span class="font-display font-black text-amber-950 text-base" id="posTodaySalesDisplay">
+                        &#8377;{{ today_counter_revenue|floatformat:0 }}
+                    </span>
+                    <span class="text-[10px] text-amber-700 ml-1">({{ today_counter_count }} bill{{ today_counter_count|pluralize }})</span>
+                </div>
+                <button type="button" onclick="resetRegisterCart()" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-red-300 hover:text-red-600">
+                    <i class="fa-solid fa-rotate-left mr-1"></i> Clear Cart
+                </button>
+            </div>
+        </div>
+
+        <!-- POS Workspace Split (Left: Catalog & Search / Right: Counter Register) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- LEFT COLUMN: Product Search & Quick Add Grid (Col 7) -->
+            <div class="lg:col-span-7 space-y-4">
+                
+                <!-- Search & Filters Card -->
+                <div class="bg-white p-5 rounded-3xl border border-brand-border shadow-sm space-y-3">
+                    <div class="relative">
+                        <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="posSearchInput" placeholder="Scan Barcode or Type Product Name / SKU / Fabric..."
+                               oninput="handlePosSearch(this.value)"
+                               autocomplete="off"
+                               class="w-full text-xs pl-11 pr-4 py-3 rounded-2xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none transition-all shadow-inner font-medium">
+                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 border border-gray-200 bg-white px-2 py-0.5 rounded-md">Live Sync</span>
+                    </div>
+
+                    <!-- Category Quick Select -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs scrollbar-none" id="posCategoryPills">
+                        <button type="button" onclick="filterByCategory('')" class="cat-pill active px-3 py-1.5 rounded-xl font-bold bg-brand-dark text-white whitespace-nowrap text-[11px]">
+                            All Menswear
+                        </button>
+                        {% for cat in categories %}
+                        <button type="button" onclick="filterByCategory('{{ cat.id }}')" class="cat-pill px-3 py-1.5 rounded-xl font-semibold bg-brand-surface text-gray-700 hover:bg-amber-100 whitespace-nowrap text-[11px] border border-brand-border">
+                            {{ cat.name }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Products Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[620px] overflow-y-auto pr-1" id="posProductsContainer">
+                    {% for product in products %}
+                    <div class="bg-white p-3.5 rounded-2xl border border-brand-border shadow-sm pos-product-card transition-all flex flex-col justify-between space-y-2.5">
+                        <div class="flex items-start gap-3">
+                            <img src="{{ product.main_image }}" alt="" class="w-14 h-16 rounded-xl object-cover object-top border border-brand-border bg-brand-surface shrink-0">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-brand-gold block">{{ product.category.name }}</span>
+                                <h3 class="font-bold text-brand-dark text-xs truncate" title="{{ product.name }}">{{ product.name }}</h3>
+                                <div class="flex items-baseline gap-1.5 mt-0.5">
+                                    <span class="font-extrabold text-brand-dark text-sm">&#8377;{{ product.discount_price }}</span>
+                                    {% if product.price > product.discount_price %}
+                                    <span class="line-through text-gray-400 text-[10px]">&#8377;{{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sizes & Real-time Stock Pill Buttons -->
+                        <div>
+                            <span class="text-[10px] font-bold text-gray-400 block mb-1.5">Select Size to Bill:</span>
+                            <div class="flex flex-wrap gap-1.5">
+                                {% for variant in product.variants.all %}
+                                {% if variant.stock_quantity > 0 %}
+                                <button type="button" 
+                                        onclick="addToRegisterCart({{ product.id }}, '{{ product.name|escapejs }}', '{{ variant.size }}', {{ product.discount_price }}, {{ variant.stock_quantity }})"
+                                        class="px-2.5 py-1 rounded-lg border text-xs font-bold transition-all border-brand-border bg-white text-brand-dark hover:border-brand-gold hover:bg-amber-50">
+                                    {{ variant.size }}
+                                    <span class="text-[9px] font-normal text-emerald-600 ml-0.5">({{ variant.stock_quantity }})</span>
+                                </button>
+                                {% else %}
+                                <span class="px-2.5 py-1 rounded-lg border text-xs font-bold bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed" title="Sold Out in Showroom & Online">
+                                    {{ variant.size }} (0)
+                                </span>
+                                {% endif %}
+                                {% empty %}
+                                <button type="button"
+                                        onclick="addToRegisterCart({{ product.id }}, '{{ product.name|escapejs }}', 'Standard', {{ product.discount_price }}, 10)"
+                                        class="px-2.5 py-1 rounded-lg border text-xs font-bold bg-white text-brand-dark hover:border-brand-gold">
+                                    Standard
+                                </button>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+            </div>
+
+            <!-- RIGHT COLUMN: Counter Register & Billing (Col 5) -->
+            <div class="lg:col-span-5 bg-white rounded-3xl border border-brand-border shadow-sm p-5 sm:p-6 space-y-5 lg:sticky lg:top-24">
+                
+                <!-- Register Header -->
+                <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-cash-register text-brand-gold text-lg"></i>
+                        <h2 class="font-display font-bold text-brand-dark text-lg">Showroom Register</h2>
+                    </div>
+                    <span class="text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg" id="cartItemCountBadge">
+                        0 Garments
+                    </span>
+                </div>
+
+                <!-- Customer Details (Optional) -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1 text-[11px]">Customer Name</label>
+                        <input type="text" id="posCustomerName" placeholder="Walk-in Customer"
+                               class="w-full text-xs px-3 py-2 rounded-xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-600 mb-1 text-[11px]">Mobile Number</label>
+                        <input type="tel" id="posCustomerPhone" maxlength="10" placeholder="e.g. 9876543210"
+                               class="w-full text-xs px-3 py-2 rounded-xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none font-mono">
+                    </div>
+                </div>
+
+                <!-- Register Item List -->
+                <div class="space-y-2.5 max-h-60 overflow-y-auto pr-1 divide-y divide-brand-border" id="posRegisterCartList">
+                    <div class="py-10 text-center text-gray-400 text-xs space-y-2" id="posEmptyCartPlaceholder">
+                        <i class="fa-solid fa-shirt text-3xl text-gray-300 block"></i>
+                        <p>No garments in this bill yet.</p>
+                        <p class="text-[11px] text-gray-400">Click any size on the left to add to bill.</p>
+                    </div>
+                </div>
+
+                <!-- Pricing & Counter Discount -->
+                <div class="space-y-2.5 pt-3 border-t border-brand-border text-xs">
+                    <div class="flex justify-between text-gray-600">
+                        <span>Items Subtotal</span>
+                        <span class="font-bold text-brand-dark" id="posSubtotalDisplay">&#8377;0</span>
+                    </div>
+
+                    <!-- In-Store Counter Discount -->
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="text-gray-600">Counter Discount (&#8377;)</span>
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-gray-400">-&#8377;</span>
+                            <input type="number" id="posDiscountInput" value="0" min="0"
+                                   oninput="calculatePosTotals()"
+                                   class="w-20 text-right text-xs font-bold px-2 py-1 rounded-lg border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Grand Total -->
+                    <div class="pt-3 border-t-2 border-brand-border flex justify-between items-baseline">
+                        <div>
+                            <span class="font-bold text-brand-dark text-sm block">Total To Collect</span>
+                            <span class="text-[10px] text-gray-400">Deducts stock immediately</span>
+                        </div>
+                        <span class="font-display font-black text-brand-dark text-2xl" id="posGrandTotalDisplay">&#8377;0</span>
+                    </div>
+                </div>
+
+                <!-- Payment Method Selector -->
+                <div class="space-y-2 pt-2">
+                    <label class="text-[11px] font-bold uppercase tracking-wider text-gray-500 block">Payment Method:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="pos-pay-opt flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-brand-dark bg-brand-surface cursor-pointer text-center">
+                            <input type="radio" name="pos_payment_method" value="IN_STORE_CASH" class="sr-only" checked onchange="onPosPaymentChange()">
+                            <i class="fa-solid fa-money-bill-wave text-green-600 text-sm mb-1"></i>
+                            <span class="text-[11px] font-bold text-brand-dark">Cash</span>
+                        </label>
+                        <label class="pos-pay-opt flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-brand-border hover:border-brand-gold cursor-pointer text-center">
+                            <input type="radio" name="pos_payment_method" value="IN_STORE_UPI" class="sr-only" onchange="onPosPaymentChange()">
+                            <i class="fa-solid fa-qrcode text-brand-gold text-sm mb-1"></i>
+                            <span class="text-[11px] font-bold text-brand-dark">UPI Standee</span>
+                        </label>
+                        <label class="pos-pay-opt flex flex-col items-center justify-center p-2.5 rounded-xl border-2 border-brand-border hover:border-brand-gold cursor-pointer text-center">
+                            <input type="radio" name="pos_payment_method" value="IN_STORE_CARD" class="sr-only" onchange="onPosPaymentChange()">
+                            <i class="fa-solid fa-credit-card text-blue-600 text-sm mb-1"></i>
+                            <span class="text-[11px] font-bold text-brand-dark">Card POS</span>
+                        </label>
+                    </div>
+
+                    <!-- Cash Calculator (Shown when Cash selected) -->
+                    <div id="posCashCalculator" class="p-3 bg-brand-surface rounded-xl border border-brand-border text-xs space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-gray-600 font-medium">Cash Received:</span>
+                            <div class="flex items-center gap-1">
+                                <span class="font-bold text-gray-500">&#8377;</span>
+                                <input type="number" id="posCashReceived" placeholder="0"
+                                       oninput="calculateCashChange()"
+                                       class="w-24 text-right text-xs font-bold px-2 py-1 rounded-lg border border-brand-border bg-white outline-none focus:border-brand-gold">
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-emerald-800 font-bold">
+                            <span>Change to Return:</span>
+                            <span id="posCashChangeDisplay">&#8377;0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Complete Sale CTA Button -->
+                <button type="button" id="btnPosCharge" onclick="executePosSale()"
+                        class="btn-gold w-full py-4 rounded-xl text-sm font-bold shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.01]">
+                    <i class="fa-solid fa-check-circle"></i>
+                    <span id="btnPosChargeText">Charge &#8377;0 &amp; Print Bill</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- THERMAL RECEIPT MODAL (80mm Bill / Printable) -->
+<div id="thermalReceiptModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-brand-border space-y-4">
+        
+        <!-- Printable Receipt Box -->
+        <div id="receiptPrintArea" class="font-mono text-xs text-gray-800 space-y-3 pb-2 border-b border-dashed border-gray-300">
+            <!-- Receipt Header -->
+            <div class="text-center space-y-1">
+                <div class="font-black text-base text-black tracking-wider">SK FASHION</div>
+                <div class="text-[10px] text-gray-600 uppercase tracking-widest">Everything For Mens</div>
+                <div class="text-[10px] text-gray-500 leading-tight">
+                    Shop No 01, Delhi Gate, Balikashram Rd,<br>
+                    Sarjepura city, Ahilyanagar - 414001<br>
+                    Phone: +91 98765 43210
+                </div>
+                <div class="border-b border-dashed border-gray-300 pt-2"></div>
+            </div>
+
+            <!-- Receipt Meta -->
+            <div class="text-[10px] space-y-0.5">
+                <div class="flex justify-between"><span>Bill No:</span><strong id="rcptBillNo">#SKF-XXXX</strong></div>
+                <div class="flex justify-between"><span>Date:</span><span id="rcptDate">--</span></div>
+                <div class="flex justify-between"><span>Customer:</span><span id="rcptCustomer">Walk-in</span></div>
+                <div class="flex justify-between"><span>Payment:</span><span id="rcptPayment">Cash</span></div>
+                <div class="border-b border-dashed border-gray-300 pt-1"></div>
+            </div>
+
+            <!-- Items List -->
+            <div class="space-y-1 text-[11px]" id="rcptItemsList"></div>
+
+            <!-- Financials -->
+            <div class="border-t border-dashed border-gray-300 pt-2 space-y-1 text-[11px]">
+                <div class="flex justify-between"><span>Subtotal:</span><span id="rcptSubtotal">&#8377;0</span></div>
+                <div class="flex justify-between text-green-700" id="rcptDiscountRow"><span>Discount:</span><span id="rcptDiscount">-&#8377;0</span></div>
+                <div class="flex justify-between font-black text-sm text-black pt-1 border-t border-dashed border-gray-300">
+                    <span>NET AMOUNT:</span>
+                    <span id="rcptNet">&#8377;0</span>
+                </div>
+            </div>
+
+            <div class="text-center text-[10px] text-gray-500 pt-2 space-y-1 border-t border-dashed border-gray-300">
+                <p>Goods can be exchanged within 7 days with this bill.</p>
+                <p class="font-bold">Thank you for shopping at SK Fashion!</p>
+            </div>
+        </div>
+
+        <!-- Receipt Action Buttons (Hidden on Print) -->
+        <div class="grid grid-cols-2 gap-2 pt-2 no-print">
+            <button type="button" onclick="window.print()" class="btn-dark py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-print"></i> <span>Print Receipt</span>
+            </button>
+            <button type="button" onclick="closeReceiptModal()" class="btn-gold py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow">
+                <i class="fa-solid fa-plus"></i> <span>Next Customer</span>
+            </button>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let registerCart = [];
+let currentSubtotal = 0;
+let currentGrandTotal = 0;
+let lastCompletedOrderId = null;
+
+// Add Item to Register Cart
+function addToRegisterCart(productId, name, size, price, maxStock) {
+    const existingIndex = registerCart.findIndex(i => i.product_id === productId && i.size === size);
+
+    if (existingIndex > -1) {
+        if (registerCart[existingIndex].quantity < maxStock) {
+            registerCart[existingIndex].quantity += 1;
+        } else {
+            alert(`Cannot add more: Only ${maxStock} pieces available in showroom stock.`);
+            return;
+        }
+    } else {
+        registerCart.push({
+            product_id: productId,
+            name: name,
+            size: size,
+            price: price,
+            quantity: 1,
+            max_stock: maxStock
+        });
+    }
+
+    renderRegisterCart();
+}
+
+function updateCartQty(index, delta) {
+    if (!registerCart[index]) return;
+    const item = registerCart[index];
+    const newQty = item.quantity + delta;
+
+    if (newQty <= 0) {
+        registerCart.splice(index, 1);
+    } else if (newQty > item.max_stock) {
+        alert(`Maximum showroom stock is ${item.max_stock} units.`);
+        return;
+    } else {
+        item.quantity = newQty;
+    }
+
+    renderRegisterCart();
+}
+
+function removeFromRegister(index) {
+    registerCart.splice(index, 1);
+    renderRegisterCart();
+}
+
+function resetRegisterCart() {
+    registerCart = [];
+    document.getElementById('posDiscountInput').value = '0';
+    document.getElementById('posCashReceived').value = '';
+    renderRegisterCart();
+}
+
+function renderRegisterCart() {
+    const listEl = document.getElementById('posRegisterCartList');
+    const badgeEl = document.getElementById('cartItemCountBadge');
+    if (!listEl) return;
+
+    if (registerCart.length === 0) {
+        listEl.innerHTML = `
+            <div class="py-10 text-center text-gray-400 text-xs space-y-2" id="posEmptyCartPlaceholder">
+                <i class="fa-solid fa-shirt text-3xl text-gray-300 block"></i>
+                <p>No garments in this bill yet.</p>
+                <p class="text-[11px] text-gray-400">Click any size on the left to add to bill.</p>
+            </div>
+        `;
+        badgeEl.innerText = '0 Garments';
+        calculatePosTotals();
+        return;
+    }
+
+    const totalPcs = registerCart.reduce((acc, i) => acc + i.quantity, 0);
+    badgeEl.innerText = `${totalPcs} Garment${totalPcs === 1 ? '' : 's'}`;
+
+    let html = '';
+    registerCart.forEach((item, idx) => {
+        html += `
+            <div class="py-2.5 flex items-center justify-between text-xs">
+                <div class="flex-1 pr-2 min-w-0">
+                    <div class="font-bold text-brand-dark truncate">${item.name}</div>
+                    <div class="text-[11px] text-gray-500">
+                        Size: <strong class="text-brand-dark">${item.size}</strong> &bull; ₹${item.price} each
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <div class="flex items-center gap-1.5 border border-brand-border rounded-lg bg-brand-surface p-0.5">
+                        <button type="button" onclick="updateCartQty(${idx}, -1)" class="w-6 h-6 rounded flex items-center justify-center font-bold text-gray-600 hover:bg-white">-</button>
+                        <span class="w-6 text-center font-bold text-xs text-brand-dark">${item.quantity}</span>
+                        <button type="button" onclick="updateCartQty(${idx}, 1)" class="w-6 h-6 rounded flex items-center justify-center font-bold text-gray-600 hover:bg-white">+</button>
+                    </div>
+                    <span class="font-extrabold text-brand-dark w-16 text-right">₹${Math.round(item.price * item.quantity)}</span>
+                    <button type="button" onclick="removeFromRegister(${idx})" class="text-gray-400 hover:text-red-500 p-1">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    listEl.innerHTML = html;
+    calculatePosTotals();
+}
+
+function calculatePosTotals() {
+    currentSubtotal = registerCart.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    const discountVal = parseFloat(document.getElementById('posDiscountInput').value) || 0;
+    currentGrandTotal = Math.max(0, currentSubtotal - discountVal);
+
+    document.getElementById('posSubtotalDisplay').innerText = '₹' + Math.round(currentSubtotal);
+    document.getElementById('posGrandTotalDisplay').innerText = '₹' + Math.round(currentGrandTotal);
+    document.getElementById('btnPosChargeText').innerText = `Charge ₹${Math.round(currentGrandTotal)} & Print Bill`;
+
+    calculateCashChange();
+}
+
+function onPosPaymentChange() {
+    const radios = document.querySelectorAll('input[name="pos_payment_method"]');
+    let sel = 'IN_STORE_CASH';
+    radios.forEach(r => {
+        const label = r.closest('label');
+        if (r.checked) {
+            sel = r.value;
+            label.classList.add('border-brand-dark', 'bg-brand-surface');
+            label.classList.remove('border-brand-border');
+        } else {
+            label.classList.remove('border-brand-dark', 'bg-brand-surface');
+            label.classList.add('border-brand-border');
+        }
+    });
+
+    const cashCalc = document.getElementById('posCashCalculator');
+    if (sel === 'IN_STORE_CASH') {
+        cashCalc.classList.remove('hidden');
+    } else {
+        cashCalc.classList.add('hidden');
+    }
+}
+
+function calculateCashChange() {
+    const received = parseFloat(document.getElementById('posCashReceived').value) || 0;
+    const change = Math.max(0, received - currentGrandTotal);
+    document.getElementById('posCashChangeDisplay').innerText = '₹' + Math.round(change);
+}
+
+// Live Search via AJAX
+let searchTimeout = null;
+function handlePosSearch(val) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(async () => {
+        try {
+            const res = await fetch(`{% url 'pos_search_products' %}?q=${encodeURIComponent(val)}`);
+            const data = await res.json();
+            if (data.status === 'success') {
+                renderProductGrid(data.products);
+            }
+        } catch (e) {
+            console.error('POS Search Error:', e);
+        }
+    }, 250);
+}
+
+async function filterByCategory(catId) {
+    const pills = document.querySelectorAll('#posCategoryPills .cat-pill');
+    pills.forEach(p => p.classList.remove('bg-brand-dark', 'text-white'));
+    event.target.classList.add('bg-brand-dark', 'text-white');
+
+    try {
+        const res = await fetch(`{% url 'pos_search_products' %}?category=${encodeURIComponent(catId)}`);
+        const data = await res.json();
+        if (data.status === 'success') {
+            renderProductGrid(data.products);
+        }
+    } catch (e) {
+        console.error('POS Category Filter Error:', e);
+    }
+}
+
+function renderProductGrid(products) {
+    const container = document.getElementById('posProductsContainer');
+    if (!container) return;
+
+    if (products.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full text-center py-16 bg-white rounded-3xl border border-brand-border text-gray-400 text-xs">
+                <i class="fa-solid fa-shirt text-3xl mb-2 block text-gray-300"></i>
+                No matching garments found.
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    products.forEach(p => {
+        let sizeHtml = '';
+        if (p.variants && p.variants.length > 0) {
+            p.variants.forEach(v => {
+                if (v.stock_quantity > 0) {
+                    sizeHtml += `
+                        <button type="button" 
+                                onclick="addToRegisterCart(${p.id}, '${escapeHtml(p.name)}', '${v.size}', ${p.discount_price}, ${v.stock_quantity})"
+                                class="px-2.5 py-1 rounded-lg border text-xs font-bold transition-all border-brand-border bg-white text-brand-dark hover:border-brand-gold hover:bg-amber-50">
+                            ${v.size} <span class="text-[9px] font-normal text-emerald-600 ml-0.5">(${v.stock_quantity})</span>
+                        </button>
+                    `;
+                } else {
+                    sizeHtml += `
+                        <span class="px-2.5 py-1 rounded-lg border text-xs font-bold bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed">
+                            ${v.size} (0)
+                        </span>
+                    `;
+                }
+            });
+        }
+
+        html += `
+            <div class="bg-white p-3.5 rounded-2xl border border-brand-border shadow-sm pos-product-card transition-all flex flex-col justify-between space-y-2.5">
+                <div class="flex items-start gap-3">
+                    <img src="${p.main_image}" alt="" class="w-14 h-16 rounded-xl object-cover object-top border border-brand-border bg-brand-surface shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-brand-gold block">${escapeHtml(p.category)}</span>
+                        <h3 class="font-bold text-brand-dark text-xs truncate" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</h3>
+                        <div class="flex items-baseline gap-1.5 mt-0.5">
+                            <span class="font-extrabold text-brand-dark text-sm">₹${p.discount_price}</span>
+                            ${p.price > p.discount_price ? `<span class="line-through text-gray-400 text-[10px]">₹${p.price}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold text-gray-400 block mb-1.5">Select Size to Bill:</span>
+                    <div class="flex flex-wrap gap-1.5">${sizeHtml}</div>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// Complete Sale Execution (AJAX)
+async function executePosSale() {
+    if (registerCart.length === 0) {
+        alert('Please add at least one garment to the bill before charging.');
+        return;
+    }
+
+    const btn = document.getElementById('btnPosCharge');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Counter Bill...';
+
+    const radios = document.querySelectorAll('input[name="pos_payment_method"]');
+    let paymentMethod = 'IN_STORE_CASH';
+    radios.forEach(r => { if (r.checked) paymentMethod = r.value; });
+
+    const postPayload = {
+        customer_name: document.getElementById('posCustomerName').value.trim() || 'Walk-in Customer',
+        customer_phone: document.getElementById('posCustomerPhone').value.trim() || '9999999999',
+        discount_amount: parseFloat(document.getElementById('posDiscountInput').value) || 0,
+        payment_method: paymentMethod,
+        cart_items: registerCart.map(i => ({
+            product_id: i.product_id,
+            size: i.size,
+            quantity: i.quantity,
+            unit_price: i.price
+        }))
+    };
+
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch("{% url 'pos_complete_sale' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify(postPayload)
+        });
+
+        const data = await res.json();
+        if (data.status === 'success') {
+            lastCompletedOrderId = data.order_id;
+            openReceiptModal(data);
+            resetRegisterCart();
+            // Refresh search/grid to display newly decremented stocks
+            handlePosSearch(document.getElementById('posSearchInput').value);
+        } else {
+            alert(data.message || 'Error completing sale.');
+        }
+    } catch (err) {
+        console.error(err);
+        alert('An unexpected network error occurred while generating the bill.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
+
+// Receipt Modal Handler
+function openReceiptModal(orderData) {
+    document.getElementById('rcptBillNo').innerText = `#${orderData.order_id}`;
+    document.getElementById('rcptDate').innerText = orderData.created_at;
+    document.getElementById('rcptCustomer').innerText = orderData.customer_name;
+    document.getElementById('rcptPayment').innerText = orderData.payment_method;
+
+    let itemsHtml = '';
+    orderData.items.forEach(it => {
+        itemsHtml += `
+            <div class="flex justify-between items-start">
+                <div class="pr-2">${it.quantity}x ${it.name} (${it.size})</div>
+                <div class="font-bold">₹${Math.round(it.total)}</div>
+            </div>
+        `;
+    });
+    document.getElementById('rcptItemsList').innerHTML = itemsHtml;
+
+    document.getElementById('rcptSubtotal').innerText = `₹${Math.round(orderData.subtotal)}`;
+    if (orderData.discount_amount > 0) {
+        document.getElementById('rcptDiscountRow').classList.remove('hidden');
+        document.getElementById('rcptDiscount').innerText = `-₹${Math.round(orderData.discount_amount)}`;
+    } else {
+        document.getElementById('rcptDiscountRow').classList.add('hidden');
+    }
+    document.getElementById('rcptNet').innerText = `₹${Math.round(orderData.total_amount)}`;
+
+    document.getElementById('thermalReceiptModal').classList.remove('hidden');
+}
+
+function closeReceiptModal() {
+    document.getElementById('thermalReceiptModal').classList.add('hidden');
+    document.getElementById('posCustomerName').value = '';
+    document.getElementById('posCustomerPhone').value = '';
+    document.getElementById('posSearchInput').focus();
+}
+
+// Shortcut: press '/' to focus search input
+document.addEventListener('keydown', (e) => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.getElementById('posSearchInput').focus();
+    }
+});
+</script>
+{% endblock %}

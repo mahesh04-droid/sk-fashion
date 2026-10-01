@@ -267,6 +267,8 @@
                 {% if order.customer_email %}Email: {{ order.customer_email }}<br>{% endif %}
                 {% if order.delivery_type == 'STORE_PICKUP' %}
                 <span style="color:#b8862b;font-weight:700;">Showroom Pickup at Delhi Gate Showroom</span>
+                {% elif order.delivery_type == 'COUNTER_SALE' %}
+                <span style="color:#16a34a;font-weight:700;">Showroom Counter Walk-in Sale (Delhi Gate)</span>
                 {% else %}
                 Address: {{ order.address_line }},<br>
                 {{ order.city }}, {{ order.state }} - {{ order.pincode }}

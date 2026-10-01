@@ -1,0 +1,716 @@
+{% extends 'base.html' %}
+{% block title %}Store Manager Dashboard | SK Fashion Ahilyanagar{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js for Sales Analytics -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+    .manager-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .manager-card:hover {
+        transform: translateY(-2px);
+    }
+    .status-select {
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.2em 1.2em;
+        padding-right: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-brand-surface min-h-screen py-8 border-b border-brand-border">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+
+        <!-- Top Manager Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-brand-border shadow-sm">
+            <div class="space-y-1">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="text-[11px] font-extrabold uppercase tracking-widest text-brand-gold">Ahilyanagar Flagship Showroom</span>
+                    <span class="text-xs text-gray-300">&bull;</span>
+                    <span class="text-xs font-semibold text-gray-500">Live Management Desk</span>
+                </div>
+                <h1 class="font-display font-bold text-brand-dark text-2xl sm:text-3xl">
+                    Store Manager &amp; Dispatch Console
+                </h1>
+                <p class="text-xs text-gray-500">
+                    Manage online orders, track daily revenue velocity, inspect customer pickups, and adjust inventory.
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'pos_terminal' %}"
+                   class="btn-gold px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-cash-register"></i>
+                    <span>Showroom Counter POS</span>
+                </a>
+                <a href="{% url 'admin:index' %}" target="_blank"
+                   class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-brand-gold flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-gear text-brand-gold"></i>
+                    <span>Django Admin</span>
+                </a>
+                <a href="{% url 'product_list' %}"
+                   class="btn-dark px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-store"></i>
+                    <span>View Live Shop</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Alert Notification Toast -->
+        <div id="managerToast" class="hidden p-4 rounded-2xl text-xs font-semibold flex items-center justify-between border transition-all animate-fadeIn">
+            <div class="flex items-center gap-2" id="managerToastMsg"></div>
+            <button type="button" onclick="document.getElementById('managerToast').classList.add('hidden')" class="text-gray-400 hover:text-gray-700">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- 1. KPI Metric Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-5">
+            <!-- Card 1: Today's Revenue -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm manager-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Today's Revenue</span>
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 text-brand-gold flex items-center justify-center text-sm font-bold">
+                        &#8377;
+                    </div>
+                </div>
+                <div class="font-display font-black text-brand-dark text-2xl sm:text-3xl">
+                    &#8377;{{ today_revenue|floatformat:0 }}
+                </div>
+                <div class="text-[11px] text-gray-500 mt-1 flex items-center gap-1">
+                    <span class="font-semibold text-brand-dark">{{ today_orders_count }}</span> order{{ today_orders_count|pluralize }} received today
+                </div>
+            </div>
+
+            <!-- Card 2: Pending Dispatch -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm manager-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Needs Packing</span>
+                    <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-box"></i>
+                    </div>
+                </div>
+                <div class="font-display font-black text-amber-900 text-2xl sm:text-3xl">
+                    {{ pending_orders_count }}
+                </div>
+                <div class="text-[11px] text-amber-700 mt-1 font-semibold">
+                    Awaiting pack / dispatch
+                </div>
+            </div>
+
+            <!-- Card 3: Showroom Pickups -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm manager-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700">Store Pickups</span>
+                    <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                </div>
+                <div class="font-display font-black text-blue-950 text-2xl sm:text-3xl">
+                    {{ pickup_orders_count }}
+                </div>
+                <div class="text-[11px] text-blue-600 mt-1">
+                    Delhi Gate Counter collection
+                </div>
+            </div>
+
+            <!-- Card 4: Low Inventory Alert -->
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm manager-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-red-600">Low Stock Alert</span>
+                    <div class="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                </div>
+                <div class="font-display font-black text-red-700 text-2xl sm:text-3xl">
+                    {{ total_low_stock_count }}
+                </div>
+                <div class="text-[11px] text-red-600 mt-1 font-semibold">
+                    Variants &le; 5 units left
+                </div>
+            </div>
+
+            <!-- Card 5: All-time Revenue -->
+            <div class="col-span-2 lg:col-span-1 bg-white rounded-3xl p-5 sm:p-6 border border-brand-border shadow-sm manager-card">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Paid Sales</span>
+                    <div class="w-8 h-8 rounded-xl bg-green-50 text-green-700 flex items-center justify-center text-sm">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                </div>
+                <div class="font-display font-black text-brand-dark text-2xl sm:text-3xl">
+                    &#8377;{{ total_revenue|floatformat:0 }}
+                </div>
+                <div class="text-[11px] text-gray-500 mt-1">
+                    Across {{ total_orders_count }} total orders
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Revenue Chart & Top Selling Split Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+            <!-- Left: 7-Day Revenue Velocity Chart (Col 8) -->
+            <div class="lg:col-span-8 bg-white rounded-3xl p-6 sm:p-7 border border-brand-border shadow-sm space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <div class="section-label" style="font-size:10px;">Sales Analytics</div>
+                        <h2 class="font-display font-bold text-brand-dark text-lg sm:text-xl">Last 7 Days Revenue Trend</h2>
+                    </div>
+                    <span class="text-xs text-gray-400">Values in INR (&#8377;)</span>
+                </div>
+                <div class="h-64 sm:h-72 w-full pt-2">
+                    <canvas id="salesTrendChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right: Top Selling Garments (Col 4) -->
+            <div class="lg:col-span-4 bg-white rounded-3xl p-6 sm:p-7 border border-brand-border shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="section-label" style="font-size:10px;">Leaderboard</div>
+                        <h2 class="font-display font-bold text-brand-dark text-lg">Top Menswear</h2>
+                    </div>
+                    <span class="text-xs text-brand-gold font-bold"><i class="fa-solid fa-fire"></i> Best Sellers</span>
+                </div>
+                <div class="divide-y divide-brand-border space-y-3 pt-1">
+                    {% for item in top_products %}
+                    <div class="pt-3 first:pt-0 flex items-center justify-between text-xs">
+                        <div class="space-y-0.5 max-w-[200px]">
+                            <div class="font-bold text-brand-dark truncate">{{ item.product_name }}</div>
+                            <div class="text-[11px] text-gray-500 font-medium">Sold: <strong class="text-brand-dark">{{ item.units_sold }} pcs</strong></div>
+                        </div>
+                        <div class="font-extrabold text-brand-dark text-right">
+                            &#8377;{{ item.revenue|floatformat:0 }}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-gray-400 text-xs py-8 text-center">No sales recorded yet.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. LIVE ORDER DISPATCH CONSOLE -->
+        <div class="bg-white rounded-3xl border border-brand-border shadow-sm overflow-hidden">
+            <!-- Table Header Bar -->
+            <div class="p-6 border-b border-brand-border space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="section-label" style="font-size:10px;">Dispatch Queue</div>
+                        <h2 class="font-display font-bold text-brand-dark text-xl">Recent Store Orders</h2>
+                    </div>
+                    
+                    <!-- Search Bar -->
+                    <form method="GET" action="{% url 'store_manager' %}" class="flex items-center gap-2">
+                        {% if status_filter != 'all' %}<input type="hidden" name="status" value="{{ status_filter }}">{% endif %}
+                        <div class="relative">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+                            <input type="text" name="q" value="{{ search_q }}" placeholder="Order ID, Customer, Phone..."
+                                   class="text-xs pl-8 pr-4 py-2.5 rounded-xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none w-56 sm:w-64 transition-all">
+                        </div>
+                        <button type="submit" class="btn-dark px-4 py-2.5 rounded-xl text-xs font-bold">Search</button>
+                        {% if search_q %}
+                        <a href="{% url 'store_manager' %}" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1"><i class="fa-solid fa-xmark"></i></a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                <!-- Filter Pills -->
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold scrollbar-none">
+                    <a href="{% url 'store_manager' %}?status=all"
+                       class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap {% if status_filter == 'all' %}bg-brand-dark text-white font-bold{% else %}bg-brand-surface text-gray-600 hover:bg-gray-200{% endif %}">
+                        All Orders ({{ total_orders_count }})
+                    </a>
+                    <a href="{% url 'store_manager' %}?status=pending"
+                       class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap {% if status_filter == 'pending' %}bg-amber-500 text-white font-bold{% else %}bg-amber-50 text-amber-800 hover:bg-amber-100{% endif %}">
+                        <i class="fa-solid fa-clock text-[10px] mr-1"></i> Needs Action ({{ pending_orders_count }})
+                    </a>
+                    <a href="{% url 'store_manager' %}?status=pickup"
+                       class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap {% if status_filter == 'pickup' %}bg-blue-600 text-white font-bold{% else %}bg-blue-50 text-blue-800 hover:bg-blue-100{% endif %}">
+                        <i class="fa-solid fa-store text-[10px] mr-1"></i> Store Pickups ({{ pickup_orders_count }})
+                    </a>
+                    <a href="{% url 'store_manager' %}?status=shipped"
+                       class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap {% if status_filter == 'shipped' %}bg-purple-600 text-white font-bold{% else %}bg-purple-50 text-purple-800 hover:bg-purple-100{% endif %}">
+                        <i class="fa-solid fa-truck-fast text-[10px] mr-1"></i> Dispatched
+                    </a>
+                    <a href="{% url 'store_manager' %}?status=delivered"
+                       class="px-3.5 py-1.5 rounded-xl transition-all whitespace-nowrap {% if status_filter == 'delivered' %}bg-green-600 text-white font-bold{% else %}bg-green-50 text-green-800 hover:bg-green-100{% endif %}">
+                        <i class="fa-solid fa-circle-check text-[10px] mr-1"></i> Delivered ({{ delivered_orders_count }})
+                    </a>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-brand-surface text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-brand-border">
+                        <tr>
+                            <th class="py-3.5 px-6">Order ID &amp; Date</th>
+                            <th class="py-3.5 px-6">Customer &amp; Delivery</th>
+                            <th class="py-3.5 px-6">Garments</th>
+                            <th class="py-3.5 px-6">Total &amp; Payment</th>
+                            <th class="py-3.5 px-6">Order Status</th>
+                            <th class="py-3.5 px-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-border bg-white" id="ordersTableBody">
+                        {% for order in orders %}
+                        <tr class="hover:bg-amber-50/30 transition-colors" id="row-{{ order.order_id }}">
+                            <!-- Order ID -->
+                            <td class="py-4 px-6 align-top">
+                                <span class="font-mono font-bold text-brand-dark block text-sm">#{{ order.order_id }}</span>
+                                <span class="text-gray-400 text-[11px] block mt-0.5">{{ order.created_at|date:"d M Y, h:i A" }}</span>
+                                {% if order.upi_transaction_id %}
+                                <span class="inline-block mt-1 font-mono text-[10px] bg-amber-50 text-brand-gold px-1.5 py-0.5 rounded border border-amber-200">
+                                    UTR: {{ order.upi_transaction_id }}
+                                </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Customer Info -->
+                            <td class="py-4 px-6 align-top space-y-1">
+                                <strong class="text-brand-dark font-bold text-xs block">{{ order.customer_name }}</strong>
+                                <a href="tel:{{ order.customer_phone }}" class="text-blue-600 hover:underline font-mono text-[11px] block">
+                                    <i class="fa-solid fa-phone text-[9px] mr-1"></i>{{ order.customer_phone }}
+                                </a>
+                                <div>
+                                    {% if order.delivery_type == 'STORE_PICKUP' %}
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                        <i class="fa-solid fa-store"></i> Delhi Gate Pickup
+                                    </span>
+                                    {% else %}
+                                    <span class="inline-flex items-center gap-1 text-[10px] font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
+                                        <i class="fa-solid fa-truck-fast"></i> Home: {{ order.city }} ({{ order.pincode }})
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </td>
+
+                            <!-- Items Summary -->
+                            <td class="py-4 px-6 align-top space-y-1 max-w-[220px]">
+                                {% for item in order.items.all %}
+                                <div class="text-[11px] text-gray-700 truncate">
+                                    <strong>{{ item.quantity }}x</strong> {{ item.product_name }} <span class="text-gray-400 font-semibold">({{ item.size }})</span>
+                                </div>
+                                {% endfor %}
+                            </td>
+
+                            <!-- Amount & Payment Status -->
+                            <td class="py-4 px-6 align-top space-y-1.5">
+                                <div class="font-extrabold text-brand-dark text-sm">&#8377;{{ order.total_amount|floatformat:0 }}</div>
+                                <select onchange="updatePaymentStatus('{{ order.order_id }}', this.value)"
+                                        class="text-[11px] font-bold rounded-lg border px-2 py-1 outline-none transition-all
+                                        {% if order.payment_status == 'COMPLETED' or order.payment_status == 'PAID' %}bg-green-50 text-green-800 border-green-200
+                                        {% else %}bg-amber-50 text-amber-800 border-amber-200{% endif %}">
+                                    <option value="COMPLETED" {% if order.payment_status == 'COMPLETED' or order.payment_status == 'PAID' %}selected{% endif %}>Paid (COMPLETED)</option>
+                                    <option value="PENDING" {% if order.payment_status == 'PENDING' %}selected{% endif %}>Pending</option>
+                                    <option value="FAILED" {% if order.payment_status == 'FAILED' %}selected{% endif %}>Failed</option>
+                                </select>
+                            </td>
+
+                            <!-- Order Status Dropdown -->
+                            <td class="py-4 px-6 align-top space-y-1">
+                                <select onchange="updateOrderStatus('{{ order.order_id }}', this.value)"
+                                        class="text-xs font-bold rounded-xl border border-brand-border px-3 py-1.5 bg-brand-surface text-brand-dark outline-none cursor-pointer focus:border-brand-gold transition-all">
+                                    {% for code, label in order_status_choices %}
+                                    <option value="{{ code }}" {% if order.order_status == code %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <span class="block text-[10px] text-gray-400">Updates customer status live</span>
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="py-4 px-6 align-top text-right space-y-1.5">
+                                <a href="{% url 'order_invoice' order_id=order.order_id %}" target="_blank"
+                                   class="btn-outline px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1 hover:border-brand-gold">
+                                    <i class="fa-solid fa-print text-brand-gold"></i>
+                                    <span>Invoice</span>
+                                </a>
+                                <a href="tel:{{ order.customer_phone }}"
+                                   class="btn-dark px-3 py-1.5 rounded-lg text-xs font-bold inline-flex items-center gap-1">
+                                    <i class="fa-solid fa-phone text-[10px]"></i>
+                                    <span>Call</span>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-12 text-gray-400">
+                                <i class="fa-solid fa-box-open text-4xl mb-3 block text-gray-300"></i>
+                                No orders matching the current filter.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. LOW INVENTORY QUICK MANAGER -->
+        <div class="bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-7 space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-brand-border">
+                <div>
+                    <div class="section-label" style="font-size:10px;">Stock Control</div>
+                    <h2 class="font-display font-bold text-brand-dark text-xl flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-red-500"></i>
+                        <span>Low Inventory Alert (&le; 5 Units Remaining)</span>
+                    </h2>
+                </div>
+                <span class="text-xs text-gray-400">Edit stock directly &bull; Instant sync</span>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-brand-surface text-gray-500 font-bold uppercase tracking-wider text-[10px] border-b border-brand-border">
+                        <tr>
+                            <th class="py-3 px-4">Garment</th>
+                            <th class="py-3 px-4">Size</th>
+                            <th class="py-3 px-4">Category &amp; Price</th>
+                            <th class="py-3 px-4">Current Stock</th>
+                            <th class="py-3 px-4 text-right">Quick Restock</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-brand-border">
+                        {% for variant in low_stock_variants %}
+                        <tr class="hover:bg-brand-surface/40 transition-colors" id="stock-row-{{ variant.id }}">
+                            <td class="py-3 px-4 flex items-center gap-3">
+                                <img src="{{ variant.product.main_image }}" alt="" class="w-10 h-12 rounded-lg object-cover object-top border border-brand-border bg-brand-surface">
+                                <a href="{% url 'product_detail' slug=variant.product.slug %}" target="_blank" class="font-bold text-brand-dark hover:text-brand-gold transition-colors truncate max-w-[240px]">
+                                    {{ variant.product.name }}
+                                </a>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2.5 py-1 rounded-md bg-brand-surface border border-brand-border font-bold text-brand-dark">
+                                    {{ variant.size }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-gray-500">
+                                <div>{{ variant.product.category.name }}</div>
+                                <div class="font-bold text-brand-dark">&#8377;{{ variant.product.discount_price }}</div>
+                            </td>
+                            <td class="py-3 px-4">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-bold {% if variant.stock_quantity == 0 %}bg-red-100 text-red-800{% else %}bg-amber-100 text-amber-800{% endif %}" id="stock-badge-{{ variant.id }}">
+                                    {{ variant.stock_quantity }} in stock
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <div class="inline-flex items-center gap-1.5">
+                                    <button type="button" onclick="adjustStock({{ variant.id }}, -1)" class="w-7 h-7 rounded-lg border border-brand-border bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-gray-700">-</button>
+                                    <input type="number" id="stock-input-{{ variant.id }}" value="{{ variant.stock_quantity }}" min="0" max="999"
+                                           class="w-14 text-center text-xs font-bold py-1 px-1 border border-brand-border rounded-lg bg-brand-surface focus:bg-white focus:border-brand-gold outline-none">
+                                    <button type="button" onclick="adjustStock({{ variant.id }}, 1)" class="w-7 h-7 rounded-lg border border-brand-border bg-white hover:bg-gray-100 flex items-center justify-center font-bold text-gray-700">+</button>
+                                    <button type="button" onclick="saveStock({{ variant.id }})" class="btn-dark px-3 py-1 rounded-lg text-xs font-bold ml-1">Save</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-8 text-gray-400">
+                                <i class="fa-solid fa-circle-check text-green-600 text-2xl mb-2 block"></i>
+                                All product variants currently have healthy inventory levels (&gt; 5 units).
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 5. CUSTOMER FEEDBACK & REVIEWS MODERATION -->
+        <div class="bg-white rounded-3xl border border-brand-border shadow-sm p-6 sm:p-7 space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                <div>
+                    <div class="section-label" style="font-size:10px;">Quality Control</div>
+                    <h2 class="font-display font-bold text-brand-dark text-xl">Recent Customer Reviews</h2>
+                </div>
+                <span class="text-xs text-gray-400">1-click approve / unapprove</span>
+            </div>
+
+            <div class="divide-y divide-brand-border">
+                {% for review in recent_reviews %}
+                <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs" id="rev-row-{{ review.id }}">
+                    <div class="space-y-1 max-w-xl">
+                        <div class="flex items-center gap-2">
+                            <strong class="font-bold text-brand-dark">{{ review.customer_name }}</strong>
+                            <span class="text-gray-400 text-[11px]">({{ review.city }})</span>
+                            <div class="flex text-amber-400 text-[10px]">
+                                {% for i in "12345" %}{% if forloop.counter <= review.rating %}&#9733;{% else %}&#9734;{% endif %}{% endfor %}
+                            </div>
+                        </div>
+                        <div class="text-gray-600 italic">"{{ review.comment }}"</div>
+                        <div class="text-[10px] text-gray-400">Product: <span class="font-bold text-brand-dark">{{ review.product.name }}</span> &bull; {{ review.created_at|date:"d M Y" }}</div>
+                    </div>
+                    <div>
+                        <button type="button" onclick="toggleReview({{ review.id }})" id="rev-btn-{{ review.id }}"
+                                class="px-4 py-2 rounded-xl text-xs font-bold transition-all {% if review.is_approved %}bg-green-50 text-green-700 border border-green-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200{% else %}bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-700{% endif %}">
+                            <span id="rev-btn-text-{{ review.id }}">{% if review.is_approved %}Approved (Visible){% else %}Hidden (Click to Approve){% endif %}</span>
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-6 text-gray-400 text-xs">No reviews submitted yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Parse daily sales trend data from Django context
+const rawDailySales = {{ daily_sales_json|safe }};
+
+document.addEventListener('DOMContentLoaded', () => {
+    initSalesChart();
+});
+
+function initSalesChart() {
+    const ctx = document.getElementById('salesTrendChart');
+    if (!ctx) return;
+
+    const labels = rawDailySales.map(d => d.date);
+    const revenues = rawDailySales.map(d => d.revenue);
+    const orderCounts = rawDailySales.map(d => d.orders);
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Revenue (₹)',
+                    data: revenues,
+                    borderColor: '#b8862b',
+                    backgroundColor: 'rgba(184, 134, 43, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#b8862b',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Order Count',
+                    data: orderCounts,
+                    borderColor: '#111111',
+                    backgroundColor: 'rgba(17, 17, 17, 0.05)',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    pointBackgroundColor: '#111111',
+                    pointRadius: 3,
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        boxWidth: 12,
+                        font: { size: 11, weight: 'bold' }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.dataset.label.includes('Revenue')) {
+                                return ` Revenue: ₹${context.parsed.y.toLocaleString()}`;
+                            }
+                            return ` Orders: ${context.parsed.y}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    ticks: {
+                        callback: val => '₹' + val,
+                        font: { size: 10 }
+                    },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        stepSize: 1,
+                        font: { size: 10 }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } }
+                }
+            }
+        }
+    });
+}
+
+function showToast(msg, isSuccess = true) {
+    const toast = document.getElementById('managerToast');
+    const msgEl = document.getElementById('managerToastMsg');
+    if (!toast || !msgEl) return;
+
+    toast.className = isSuccess
+        ? 'p-4 rounded-2xl text-xs font-semibold flex items-center justify-between border bg-green-50 text-green-800 border-green-200 transition-all'
+        : 'p-4 rounded-2xl text-xs font-semibold flex items-center justify-between border bg-red-50 text-red-800 border-red-200 transition-all';
+    
+    msgEl.innerHTML = `<i class="fa-solid ${isSuccess ? 'fa-circle-check text-green-600' : 'fa-circle-exclamation text-red-600'} text-sm"></i> <span>${msg}</span>`;
+    toast.classList.remove('hidden');
+    toast.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => { toast.classList.add('hidden'); }, 3500);
+}
+
+// Update Order Status via AJAX
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch("{% url 'manager_update_order_status' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                order_status: newStatus
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(`Order #${orderId} marked as ${data.order_status_display}.`);
+        } else {
+            showToast(data.message || 'Failed to update order status.', false);
+        }
+    } catch (e) {
+        showToast('Network error while updating status.', false);
+    }
+}
+
+// Update Payment Status via AJAX
+async function updatePaymentStatus(orderId, newPaymentStatus) {
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch("{% url 'manager_update_order_status' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                order_id: orderId,
+                payment_status: newPaymentStatus
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            showToast(`Payment for #${orderId} updated to ${data.payment_status_display}.`);
+        } else {
+            showToast(data.message || 'Failed to update payment status.', false);
+        }
+    } catch (e) {
+        showToast('Network error while updating payment status.', false);
+    }
+}
+
+// Adjust Stock Number in input
+function adjustStock(variantId, delta) {
+    const inp = document.getElementById(`stock-input-${variantId}`);
+    if (!inp) return;
+    let val = parseInt(inp.value) || 0;
+    val = Math.max(0, val + delta);
+    inp.value = val;
+}
+
+// Save Stock to Backend via AJAX
+async function saveStock(variantId) {
+    const inp = document.getElementById(`stock-input-${variantId}`);
+    if (!inp) return;
+    const qty = parseInt(inp.value);
+
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch("{% url 'manager_update_stock' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                variant_id: variantId,
+                stock_quantity: qty
+            })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const badge = document.getElementById(`stock-badge-${variantId}`);
+            if (badge) {
+                badge.innerText = `${data.new_quantity} in stock`;
+                badge.className = data.new_quantity === 0
+                    ? 'px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800'
+                    : 'px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800';
+            }
+            showToast(data.message);
+        } else {
+            showToast(data.message || 'Failed to update stock.', false);
+        }
+    } catch (e) {
+        showToast('Network error while updating stock.', false);
+    }
+}
+
+// Toggle Review visibility via AJAX
+async function toggleReview(reviewId) {
+    try {
+        const csrfToken = getCsrfToken();
+        const res = await fetch("{% url 'manager_toggle_review' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ review_id: reviewId })
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+            const btn = document.getElementById(`rev-btn-${reviewId}`);
+            const text = document.getElementById(`rev-btn-text-${reviewId}`);
+            if (btn && text) {
+                if (data.is_approved) {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-green-50 text-green-700 border border-green-200 hover:bg-red-50 hover:text-red-700 hover:border-red-200';
+                    text.innerText = 'Approved (Visible)';
+                } else {
+                    btn.className = 'px-4 py-2 rounded-xl text-xs font-bold transition-all bg-gray-100 text-gray-600 hover:bg-green-50 hover:text-green-700';
+                    text.innerText = 'Hidden (Click to Approve)';
+                }
+            }
+            showToast(data.message);
+        } else {
+            showToast(data.message || 'Failed to toggle review.', false);
+        }
+    } catch (e) {
+        showToast('Network error while toggling review.', false);
+    }
+}
+</script>
+{% endblock %}

@@ -6,7 +6,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Sum, F, Count
+from django.utils import timezone
+from datetime import timedelta
 from django.conf import settings
 import razorpay
 from .models import Category, Product, ProductVariant, StoreBanner, Order, OrderItem, CustomerReview, Coupon, CustomerProfile
@@ -513,6 +515,11 @@ def checkout(request):
                 quantity=item['quantity'],
                 price=item['product'].discount_price,
             )
+            # Real-time stock sync: deduct from showroom inventory
+            variant = ProductVariant.objects.filter(product=item['product'], size=item['size']).first()
+            if variant:
+                variant.stock_quantity = max(0, variant.stock_quantity - item['quantity'])
+                variant.save(update_fields=['stock_quantity'])
 
         # Clear cart and session coupon
         request.session['cart'] = {}
@@ -717,6 +724,14 @@ def verify_razorpay_payment(request):
         order.razorpay_order_id = razorpay_order_id
         order.razorpay_signature = razorpay_signature or 'verified_signature'
         order.save()
+
+        # Real-time stock sync: deduct from showroom inventory
+        for item in order.items.all():
+            if item.product:
+                variant = ProductVariant.objects.filter(product=item.product, size=item.size).first()
+                if variant:
+                    variant.stock_quantity = max(0, variant.stock_quantity - item.quantity)
+                    variant.save(update_fields=['stock_quantity'])
 
         # Clear cart and applied coupon
         request.session['cart'] = {}
@@ -1037,5 +1052,371 @@ def reorder_items(request, order_id):
     else:
         messages.warning(request, "Could not reorder: items may no longer be available.")
         return redirect('customer_account')
+
+
+def staff_or_admin_required(view_func):
+    """Decorator ensuring only staff / superuser can access Store Manager Dashboard."""
+    def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            messages.warning(request, 'Please sign in with your store staff account to access the Store Manager Dashboard.')
+            return redirect(f"/account/login/?next={request.path}")
+        if not (request.user.is_staff or request.user.is_superuser):
+            messages.error(request, 'Access restricted to SK Fashion store management.')
+            return redirect('home')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
+@staff_or_admin_required
+def store_manager_dashboard(request):
+    today = timezone.now().date()
+    start_of_today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 1. KPIs
+    today_orders = Order.objects.filter(created_at__gte=start_of_today)
+    today_orders_count = today_orders.count()
+    today_revenue = today_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+
+    all_orders = Order.objects.all()
+    total_orders_count = all_orders.count()
+    total_revenue = all_orders.filter(payment_status__in=['COMPLETED', 'PAID']).aggregate(total=Sum('total_amount'))['total'] or 0
+
+    pending_orders_count = Order.objects.filter(order_status__in=['PLACED', 'CONFIRMED', 'PACKED', 'READY_FOR_PICKUP']).count()
+    delivered_orders_count = Order.objects.filter(order_status='DELIVERED').count()
+    pickup_orders_count = Order.objects.filter(delivery_type='STORE_PICKUP').count()
+
+    # 2. Low Stock Alerts (variants with stock <= 5)
+    low_stock_variants = ProductVariant.objects.filter(stock_quantity__lte=5).select_related('product').order_by('stock_quantity')[:20]
+    total_low_stock_count = ProductVariant.objects.filter(stock_quantity__lte=5).count()
+
+    # 3. Last 7 Days Revenue Trend for Chart.js
+    daily_sales = []
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        day_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=i)
+        day_end = day_start + timedelta(days=1)
+        day_orders = Order.objects.filter(created_at__gte=day_start, created_at__lt=day_end)
+        day_rev = day_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        daily_sales.append({
+            'date': day.strftime('%d %b'),
+            'revenue': float(day_rev),
+            'orders': day_orders.count(),
+        })
+
+    # 4. Filtered Orders List
+    status_filter = request.GET.get('status', 'all')
+    search_q = request.GET.get('q', '').strip()
+
+    orders_qs = Order.objects.all().prefetch_related('items__product').order_by('-created_at')
+    if search_q:
+        orders_qs = orders_qs.filter(
+            Q(order_id__icontains=search_q) |
+            Q(customer_name__icontains=search_q) |
+            Q(customer_phone__icontains=search_q) |
+            Q(city__icontains=search_q)
+        )
+    elif status_filter == 'pending':
+        orders_qs = orders_qs.filter(order_status__in=['PLACED', 'CONFIRMED', 'PACKED', 'READY_FOR_PICKUP'])
+    elif status_filter == 'shipped':
+        orders_qs = orders_qs.filter(order_status__in=['SHIPPED', 'OUT_FOR_DELIVERY'])
+    elif status_filter == 'delivered':
+        orders_qs = orders_qs.filter(order_status='DELIVERED')
+    elif status_filter == 'pickup':
+        orders_qs = orders_qs.filter(delivery_type='STORE_PICKUP')
+    elif status_filter == 'home':
+        orders_qs = orders_qs.filter(delivery_type='HOME_DELIVERY')
+
+    recent_orders = orders_qs[:50]
+
+    # 5. Top Selling Garments
+    top_products = OrderItem.objects.values('product_name').annotate(
+        units_sold=Sum('quantity'),
+        revenue=Sum(F('price') * F('quantity'))
+    ).order_by('-units_sold')[:6]
+
+    # 6. Customer Reviews Moderation
+    recent_reviews = CustomerReview.objects.select_related('product').order_by('-created_at')[:10]
+
+    context = {
+        'today_revenue': today_revenue,
+        'today_orders_count': today_orders_count,
+        'total_revenue': total_revenue,
+        'total_orders_count': total_orders_count,
+        'pending_orders_count': pending_orders_count,
+        'delivered_orders_count': delivered_orders_count,
+        'pickup_orders_count': pickup_orders_count,
+        'low_stock_variants': low_stock_variants,
+        'total_low_stock_count': total_low_stock_count,
+        'daily_sales_json': json.dumps(daily_sales),
+        'orders': recent_orders,
+        'status_filter': status_filter,
+        'search_q': search_q,
+        'top_products': top_products,
+        'recent_reviews': recent_reviews,
+        'order_status_choices': Order.ORDER_STATUS_CHOICES,
+        'payment_status_choices': Order.PAYMENT_STATUS_CHOICES,
+    }
+    return render(request, 'store/store_manager.html', context)
+
+
+@staff_or_admin_required
+def manager_update_order_status(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    order_id = data.get('order_id')
+    new_order_status = data.get('order_status')
+    new_payment_status = data.get('payment_status')
+
+    order = get_object_or_404(Order, order_id=order_id)
+    if new_order_status:
+        order.order_status = new_order_status
+    if new_payment_status:
+        order.payment_status = new_payment_status
+    order.save()
+
+    return JsonResponse({
+        'status': 'success',
+        'message': f'Order #{order.order_id} updated successfully.',
+        'order_status': order.order_status,
+        'order_status_display': order.get_order_status_display(),
+        'payment_status': order.payment_status,
+        'payment_status_display': order.get_payment_status_display(),
+    })
+
+
+@staff_or_admin_required
+def manager_update_stock(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    variant_id = data.get('variant_id')
+    try:
+        new_quantity = int(data.get('stock_quantity'))
+        if new_quantity < 0:
+            new_quantity = 0
+    except (ValueError, TypeError):
+        return JsonResponse({'status': 'error', 'message': 'Invalid quantity.'}, status=400)
+
+    variant = get_object_or_404(ProductVariant, id=variant_id)
+    variant.stock_quantity = new_quantity
+    variant.save()
+
+    return JsonResponse({
+        'status': 'success',
+        'message': f"Stock for {variant.product.name} ({variant.size}) updated to {variant.stock_quantity}.",
+        'variant_id': variant.id,
+        'new_quantity': variant.stock_quantity,
+    })
+
+
+@staff_or_admin_required
+def manager_toggle_review(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    review_id = data.get('review_id')
+    review = get_object_or_404(CustomerReview, id=review_id)
+    review.is_approved = not review.is_approved
+    review.save()
+
+    # Update product rating & count if product is linked
+    if review.product:
+        approved = review.product.reviews.filter(is_approved=True)
+        if approved.exists():
+            from django.db.models import Avg
+            avg_val = approved.aggregate(Avg('rating'))['rating__avg'] or 5.0
+            review.product.rating = round(float(avg_val), 1)
+            review.product.reviews_count = approved.count()
+            review.product.save(update_fields=['rating', 'reviews_count'])
+
+    return JsonResponse({
+        'status': 'success',
+        'message': f"Review by {review.customer_name} {'approved' if review.is_approved else 'hidden'}.",
+        'is_approved': review.is_approved,
+    })
+
+
+@staff_or_admin_required
+def pos_terminal(request):
+    """Showroom Counter Point of Sale (POS) interface for in-store walk-in sales."""
+    today = timezone.now().date()
+    start_of_today = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Today's counter metrics
+    today_counter_orders = Order.objects.filter(delivery_type='COUNTER_SALE', created_at__gte=start_of_today)
+    today_counter_revenue = today_counter_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+    today_counter_count = today_counter_orders.count()
+
+    categories = Category.objects.all().order_by('name')
+    products = Product.objects.filter(is_available=True).prefetch_related('variants').order_by('name')
+
+    context = {
+        'products': products,
+        'categories': categories,
+        'today_counter_revenue': today_counter_revenue,
+        'today_counter_count': today_counter_count,
+        'store_settings': getattr(settings, 'STORE_SETTINGS', {}),
+    }
+    return render(request, 'store/pos_terminal.html', context)
+
+
+@staff_or_admin_required
+def pos_search_products(request):
+    """Instant JSON search for POS counter barcode / product / SKU."""
+    q = request.GET.get('q', '').strip()
+    category_id = request.GET.get('category')
+
+    products = Product.objects.filter(is_available=True).prefetch_related('variants')
+    if q:
+        products = products.filter(
+            Q(name__icontains=q) |
+            Q(sku__icontains=q) |
+            Q(fabric__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+    if category_id:
+        products = products.filter(category_id=category_id)
+
+    results = []
+    for p in products[:40]:
+        variants = []
+        for v in p.variants.all():
+            variants.append({
+                'id': v.id,
+                'size': v.size,
+                'stock_quantity': v.stock_quantity,
+            })
+        results.append({
+            'id': p.id,
+            'name': p.name,
+            'sku': p.sku or f'SKF-{p.id}',
+            'category': p.category.name if p.category else 'Menswear',
+            'price': float(p.price),
+            'discount_price': float(p.discount_price),
+            'main_image': p.main_image,
+            'variants': variants,
+        })
+
+    return JsonResponse({'status': 'success', 'products': results})
+
+
+@staff_or_admin_required
+def pos_complete_sale(request):
+    """Processes an in-store counter transaction and immediately updates inventory."""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=400)
+
+    try:
+        data = json.loads(request.body)
+    except Exception:
+        data = request.POST
+
+    customer_name = data.get('customer_name', '').strip() or 'Walk-in Customer'
+    customer_phone = data.get('customer_phone', '').strip() or '9999999999'
+    customer_email = data.get('customer_email', '').strip()
+    payment_method = data.get('payment_method', 'IN_STORE_CASH')
+    discount_amount = float(data.get('discount_amount', 0) or 0)
+    cart_items = data.get('cart_items', [])
+
+    if not cart_items:
+        return JsonResponse({'status': 'error', 'message': 'Cannot complete sale: no garments in register cart.'}, status=400)
+
+    subtotal = 0
+    items_to_create = []
+
+    # Validate stock and calculate total
+    for item in cart_items:
+        product_id = item.get('product_id')
+        size = item.get('size')
+        quantity = int(item.get('quantity', 1))
+
+        product = get_object_or_404(Product, id=product_id)
+        variant = ProductVariant.objects.filter(product=product, size=size).first()
+
+        unit_price = float(product.discount_price)
+        subtotal += unit_price * quantity
+
+        items_to_create.append({
+            'product': product,
+            'product_name': product.name,
+            'size': size,
+            'quantity': quantity,
+            'price': unit_price,
+            'variant': variant,
+        })
+
+    grand_total = max(0, subtotal - discount_amount)
+
+    # Create Order
+    order = Order.objects.create(
+        customer_name=customer_name,
+        customer_phone=customer_phone,
+        customer_email=customer_email if customer_email else None,
+        delivery_type='COUNTER_SALE',
+        address_line='Showroom Counter Sale (Delhi Gate Flagship)',
+        city='Ahilyanagar',
+        state='Maharashtra',
+        pincode='414001',
+        payment_method=payment_method,
+        payment_status='COMPLETED',
+        order_status='DELIVERED',
+        subtotal=subtotal,
+        discount_amount=discount_amount,
+        delivery_charge=0,
+        total_amount=grand_total,
+        notes='In-Store Walk-in Counter Sale',
+    )
+
+    # Create items and decrement unified stock in real time
+    for item_data in items_to_create:
+        OrderItem.objects.create(
+            order=order,
+            product=item_data['product'],
+            product_name=item_data['product_name'],
+            size=item_data['size'],
+            quantity=item_data['quantity'],
+            price=item_data['price'],
+        )
+        variant = item_data['variant']
+        if variant:
+            variant.stock_quantity = max(0, variant.stock_quantity - item_data['quantity'])
+            variant.save(update_fields=['stock_quantity'])
+
+    return JsonResponse({
+        'status': 'success',
+        'message': f"In-Store Bill #{order.order_id} generated successfully!",
+        'order_id': order.order_id,
+        'customer_name': order.customer_name,
+        'customer_phone': order.customer_phone,
+        'total_amount': float(order.total_amount),
+        'subtotal': float(order.subtotal),
+        'discount_amount': float(order.discount_amount),
+        'payment_method': order.get_payment_method_display(),
+        'created_at': order.created_at.strftime('%d %b %Y, %I:%M %p'),
+        'items': [
+            {
+                'name': i.product_name,
+                'size': i.size,
+                'quantity': i.quantity,
+                'price': float(i.price),
+                'total': float(i.total_price),
+            } for i in order.items.all()
+        ]
+    })
+
+
 
 

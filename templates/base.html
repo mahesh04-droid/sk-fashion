@@ -133,6 +133,11 @@
                         <i class="fa-solid fa-location-dot text-brand-gold" style="font-size:11px;"></i>Store
                     </a>
                     <a href="{% url 'track_order' %}" class="nav-link hover:text-brand-dark transition-colors">Track</a>
+                    {% if request.user.is_staff %}
+                    <a href="{% url 'store_manager' %}" class="nav-link flex items-center gap-1 text-brand-gold hover:text-brand-dark transition-colors font-bold">
+                        <i class="fa-solid fa-chart-line text-xs"></i>Manager
+                    </a>
+                    {% endif %}
                 </nav>
                 <!-- Wishlist Icon -->
                 <a href="{% url 'wishlist_view' %}" class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-brand-surface transition-colors" title="Wishlist">
@@ -146,6 +151,12 @@
                 </a>
                 <!-- Account / Sign In -->
                 {% if request.user.is_authenticated %}
+                {% if request.user.is_staff %}
+                <a href="{% url 'store_manager' %}" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-brand-dark text-amber-400 hover:bg-black text-xs font-bold shadow-sm transition-all" title="Store Manager Dashboard">
+                    <i class="fa-solid fa-chart-line text-[11px]"></i>
+                    <span class="hidden md:inline">Dashboard</span>
+                </a>
+                {% endif %}
                 <a href="{% url 'customer_account' %}" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full hover:bg-brand-surface border border-brand-border text-xs font-bold text-brand-dark transition-colors" title="My Account">
                     <i class="fa-solid fa-circle-user text-brand-gold text-sm"></i>
                     <span class="hidden sm:inline">{{ request.user.first_name|default:request.user.username|truncatechars:9 }}</span>
@@ -277,7 +288,11 @@
         <span>Wishlist</span>
         <span id="wishlistBadgeMobile" class="absolute top-1 right-3 bg-red-500 text-white font-black rounded-full flex items-center justify-center {% if not wishlist_count %}hidden{% endif %}" style="width:14px;height:14px;font-size:8px;">{{ wishlist_count|default:0 }}</span>
     </a>
+    {% if request.user.is_staff %}
+    <a href="{% url 'store_manager' %}" class="mob-nav-link text-brand-gold font-bold"><i class="fa-solid fa-chart-line"></i><span>Desk</span></a>
+    {% else %}
     <a href="{% url 'store_locator' %}" class="mob-nav-link"><i class="fa-solid fa-map-location-dot"></i><span>Store</span></a>
+    {% endif %}
 </nav>
 
 <!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
