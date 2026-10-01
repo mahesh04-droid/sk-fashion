@@ -100,9 +100,8 @@
                                 <span class="font-extrabold text-brand-dark" style="font-size:17px;">&#8377;{{ product.discount_price }}</span>
                                 {% if product.price > product.discount_price %}<span class="line-through text-gray-400" style="font-size:12px;">&#8377;{{ product.price }}</span>{% endif %}
                             </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <a href="{% url 'product_detail' slug=product.slug %}" class="btn-dark text-xs py-2 px-2 rounded-xl">Select Size</a>
-                                <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20want%20{{ product.name|urlencode }}%20(%E2%82%B9{{ product.discount_price }})." target="_blank" class="btn-wa text-xs py-2 px-2 rounded-xl"><i class="fa-brands fa-whatsapp" style="font-size:13px;"></i><span>WhatsApp</span></a>
+                            <div>
+                                <a href="{% url 'product_detail' slug=product.slug %}" class="btn-dark w-full text-xs py-2.5 px-3 rounded-xl text-center justify-center flex items-center gap-1.5 font-bold">Select Size &amp; Buy <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
                             </div>
                         </div>
                     </div>

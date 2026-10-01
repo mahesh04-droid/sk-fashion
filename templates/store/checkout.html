@@ -68,7 +68,7 @@
                                    class="inp w-full text-sm px-4 py-2.5 rounded-xl border border-brand-border bg-white transition-all">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-700 block mb-1.5">WhatsApp / Mobile Number *</label>
+                            <label class="text-xs font-bold text-gray-700 block mb-1.5">Mobile Number *</label>
                             <div class="relative">
                                 <span class="absolute left-3.5 top-2.5 text-xs font-bold text-gray-400">+91</span>
                                 <input type="tel" name="customer_phone" id="customer_phone" required placeholder="9876543210" maxlength="10"
@@ -292,36 +292,6 @@
                                 <p class="text-[11px] text-gray-400 mt-1">Found in your UPI app receipt right after successful payment.</p>
                             </div>
                         </div>
-
-                        <!-- Option 3: Cash On Delivery -->
-                        <label id="lblCod" class="payment-card flex items-start gap-4 p-4 rounded-xl border-2 border-brand-border hover:border-brand-gold cursor-pointer transition-all">
-                            <input type="radio" name="payment_method" value="COD" class="mt-1 accent-brand-dark" onchange="onPaymentMethodChange()">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between flex-wrap gap-2">
-                                    <span class="font-bold text-sm text-brand-dark flex items-center gap-2">
-                                        <i class="fa-solid fa-money-bill-wave text-green-600"></i>
-                                        Cash on Delivery (COD)
-                                    </span>
-                                    <span class="text-[10px] font-bold text-gray-600 bg-gray-100 px-2 py-0.5 rounded">Pay on Arrival</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Pay with cash or UPI when your menswear parcel arrives at your address.</p>
-                            </div>
-                        </label>
-
-                        <!-- Option 4: Pay via WhatsApp Chat -->
-                        <label id="lblWhatsapp" class="payment-card flex items-start gap-4 p-4 rounded-xl border-2 border-brand-border hover:border-brand-gold cursor-pointer transition-all">
-                            <input type="radio" name="payment_method" value="WHATSAPP_ORDER" class="mt-1 accent-brand-dark" onchange="onPaymentMethodChange()">
-                            <div class="flex-1">
-                                <div class="flex items-center justify-between flex-wrap gap-2">
-                                    <span class="font-bold text-sm text-brand-dark flex items-center gap-2">
-                                        <i class="fa-brands fa-whatsapp text-emerald-500 text-base"></i>
-                                        Order via WhatsApp Chat
-                                    </span>
-                                    <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">Personal Assistance</span>
-                                </div>
-                                <p class="text-xs text-gray-500 mt-1">Order will be generated and sent to the store owner's WhatsApp for customized payment.</p>
-                            </div>
-                        </label>
                     </div>
 
                     <!-- Special Notes -->
@@ -415,8 +385,8 @@
                                 <span>Easy Exchanges</span>
                             </div>
                             <div class="p-2 rounded-lg bg-brand-surface">
-                                <i class="fa-brands fa-whatsapp text-emerald-500 text-sm block mb-1"></i>
-                                <span>Live Support</span>
+                                <i class="fa-solid fa-headset text-brand-gold text-sm block mb-1"></i>
+                                <span>Phone Support</span>
                             </div>
                         </div>
                         <p class="text-center text-[11px] text-gray-400 pt-1">
@@ -605,9 +575,7 @@ function onPaymentMethodChange() {
     // Reset card styling
     const cards = [
         { id: 'lblRazorpay', val: 'RAZORPAY' },
-        { id: 'lblUpiQr', val: 'UPI_QR' },
-        { id: 'lblCod', val: 'COD' },
-        { id: 'lblWhatsapp', val: 'WHATSAPP_ORDER' }
+        { id: 'lblUpiQr', val: 'UPI_QR' }
     ];
 
     cards.forEach(c => {
@@ -652,12 +620,6 @@ function updateButtonLabel() {
     } else if (selected === 'UPI_QR') {
         iconClass = 'fa-solid fa-qrcode';
         label = `Confirm UPI Payment & Place Order (₹${Math.round(grandTotal)})`;
-    } else if (selected === 'COD') {
-        iconClass = 'fa-solid fa-money-bill-wave';
-        label = `Place Cash on Delivery Order (₹${Math.round(grandTotal)})`;
-    } else if (selected === 'WHATSAPP_ORDER') {
-        iconClass = 'fa-brands fa-whatsapp';
-        label = `Place Order & Open WhatsApp Chat`;
     }
 
     btn.innerHTML = `<i class="${iconClass}"></i> <span>${label}</span>`;
@@ -772,7 +734,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async functio
         }
     }
 
-    // For non-Razorpay methods (COD, UPI_QR, WHATSAPP_ORDER), submit standard POST
+    // For non-Razorpay methods (UPI_QR), submit standard POST
     if (paymentMethod !== 'RAZORPAY') {
         return; // Allow standard form submission
     }
@@ -808,7 +770,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async functio
 
         const orderData = await orderRes.json();
         if (orderData.status !== 'success') {
-            showAlert(orderData.message || 'Failed to initialize payment. Please try COD or UPI QR.', true);
+            showAlert(orderData.message || 'Failed to initialize payment. Please try UPI QR.', true);
             submitBtn.disabled = false;
             updateButtonLabel();
             return;
@@ -871,7 +833,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async functio
                         updateButtonLabel();
                     }
                 } catch (err) {
-                    showAlert('Payment verified check failed. Please check WhatsApp confirmation.', true);
+                    showAlert('Payment verified check failed. Please check your order status under My Account.', true);
                     submitBtn.disabled = false;
                     updateButtonLabel();
                 }
@@ -880,7 +842,7 @@ document.getElementById('checkoutForm').addEventListener('submit', async functio
                 ondismiss: function () {
                     submitBtn.disabled = false;
                     updateButtonLabel();
-                    showAlert('Payment was cancelled or closed. You can retry or choose Cash on Delivery / UPI QR.', true);
+                    showAlert('Payment was cancelled or closed. You can retry or choose UPI QR.', true);
                 }
             }
         };
@@ -921,7 +883,7 @@ function closeRazorpaySimulator() {
 async function executeSimulatedPayment(isSuccess) {
     if (!isSuccess) {
         closeRazorpaySimulator();
-        showAlert('Simulated Payment Declined: Bank simulated rejection. You can retry or choose Cash on Delivery / UPI QR.', true);
+        showAlert('Simulated Payment Declined: Bank simulated rejection. You can retry or choose UPI QR.', true);
         return;
     }
 

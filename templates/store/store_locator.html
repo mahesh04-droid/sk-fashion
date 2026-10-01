@@ -51,12 +51,12 @@
                     </div>
 
                     <div class="flex items-center gap-3 text-slate-700">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                            <i class="fa-brands fa-whatsapp text-lg"></i>
+                        <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-headset text-base"></i>
                         </div>
                         <div>
-                            <strong class="block text-slate-900 font-bold">WhatsApp Inquiries:</strong>
-                            <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="text-emerald-700 font-bold hover:underline">Chat with Store Team</a>
+                            <strong class="block text-slate-900 font-bold">Store Desk Phone:</strong>
+                            <a href="tel:{{ store_settings.PHONE }}" class="text-amber-700 font-bold hover:underline">Direct Store Assistance</a>
                         </div>
                     </div>
                 </div>
@@ -69,10 +69,10 @@
                         <span>Get Directions on Google Maps</span>
                     </a>
 
-                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion,%20I%20am%20planning%20to%20visit%20your%20Delhi%20Gate%20showroom" target="_blank"
-                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
-                        <i class="fa-brands fa-whatsapp text-base"></i>
-                        <span>Ask About Today's In-Store Stock</span>
+                    <a href="tel:{{ store_settings.PHONE }}"
+                       class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs py-3.5 rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-phone text-base"></i>
+                        <span>Call Store Desk (+91 {{ store_settings.PHONE }})</span>
                     </a>
                 </div>
 
@@ -84,8 +84,8 @@
                 <ul class="space-y-2 text-slate-600">
                     <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Trial Rooms for comfortable sizing</li>
                     <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Custom trouser length alteration support</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Wedding & Festive bulk shopping discounts</li>
-                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Instant UPI, Cash, Cards & WhatsApp Pay</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Wedding &amp; Festive bulk shopping discounts</li>
+                    <li class="flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-600"></i> Instant UPI, Credit/Debit Cards &amp; NetBanking</li>
                 </ul>
             </div>
         </div>

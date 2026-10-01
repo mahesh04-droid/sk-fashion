@@ -81,12 +81,6 @@
                     <span class="font-display font-black text-brand-dark" style="font-size:1.75rem;">&#8377;{{ grand_total|floatformat:0 }}</span>
                 </div>
                 <a href="{% url 'checkout' %}" class="btn-dark w-full py-4 rounded-xl text-sm"><span>Proceed To Checkout</span><i class="fa-solid fa-arrow-right text-xs"></i></a>
-                <div class="text-center">
-                    <p class="text-xs text-gray-400 uppercase tracking-widest font-bold mb-2">Or order on chat</p>
-                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20have%20{{ cart_items|length }}%20items%20totaling%20%E2%82%B9{{ grand_total|floatformat:0 }}.%20Can%20I%20order%20directly%3F" target="_blank" class="btn-wa w-full py-3 rounded-xl text-xs">
-                        <i class="fa-brands fa-whatsapp" style="font-size:15px;"></i><span>Quick Order via WhatsApp</span>
-                    </a>
-                </div>
             </div>
             <div class="bg-brand-surface rounded-2xl p-4 border border-brand-border text-xs text-gray-600 space-y-1">
                 <strong class="text-brand-dark font-bold block">Showroom Pickup Option</strong>

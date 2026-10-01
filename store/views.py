@@ -461,15 +461,12 @@ def checkout(request):
         notes = request.POST.get('notes', '').strip()
         grand_total = max(0, subtotal - discount_amount + delivery_charge)
 
-        if payment_method == 'COD':
-            payment_status = 'COD_VERIFIED'
-            order_status = 'CONFIRMED'
-        elif payment_method == 'UPI_QR':
+        if payment_method not in ['RAZORPAY', 'UPI_QR']:
+            payment_method = 'RAZORPAY'
+
+        if payment_method == 'UPI_QR':
             payment_status = 'PENDING'
             order_status = 'CONFIRMED' if upi_transaction_id else 'PLACED'
-        elif payment_method == 'WHATSAPP_ORDER':
-            payment_status = 'PENDING'
-            order_status = 'PLACED'
         else:
             payment_status = 'PENDING'
             order_status = 'PLACED'

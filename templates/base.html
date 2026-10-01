@@ -92,9 +92,9 @@
             <span style="color:#d4a843;">&#x2022;</span>
             <span><i class="fa-regular fa-clock mr-1.5" style="color:#f0c870;font-size:9px;"></i>Open Daily 10 AM &ndash; 10 PM</span>
             <span style="color:#d4a843;">&#x2022;</span>
-            <span><i class="fa-solid fa-hand-holding-dollar mr-1.5" style="color:#d4a843;font-size:9px;"></i>Cash On Delivery Available</span>
+            <span><i class="fa-solid fa-credit-card mr-1.5" style="color:#d4a843;font-size:9px;"></i>Instant UPI &amp; Online Payment</span>
             <span style="color:#d4a843;">&#x2022;</span>
-            <span><i class="fa-brands fa-whatsapp mr-1.5" style="color:#25D366;font-size:9px;"></i>WhatsApp: {{ store_settings.PHONE }}</span>
+            <span><i class="fa-solid fa-phone mr-1.5" style="color:#d4a843;font-size:9px;"></i>Call: {{ store_settings.PHONE }}</span>
             <span style="color:#d4a843;">&#x2022;</span>
         </span>
         {% endfor %}
@@ -134,11 +134,6 @@
                     </a>
                     <a href="{% url 'track_order' %}" class="nav-link hover:text-brand-dark transition-colors">Track</a>
                 </nav>
-                <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20want%20to%20enquire%20about%20menswear."
-                   target="_blank" class="btn-wa hidden sm:inline-flex text-xs px-3.5 py-2 rounded-full" style="font-size:12px;">
-                    <i class="fa-brands fa-whatsapp" style="font-size:14px;"></i>
-                    <span class="hidden md:inline">WhatsApp</span>
-                </a>
                 <!-- Wishlist Icon -->
                 <a href="{% url 'wishlist_view' %}" class="relative flex items-center justify-center w-10 h-10 rounded-full hover:bg-brand-surface transition-colors" title="Wishlist">
                     <i class="fa-regular fa-heart text-brand-dark hover:text-red-500 transition-colors" style="font-size:18px;"></i>
@@ -217,9 +212,9 @@
                 </div>
                 <p class="text-sm text-gray-500 leading-relaxed">Ahilyanagar's trusted menswear destination. Premium fabrics, perfect fits, honest prices.</p>
                 <div class="flex items-center gap-2.5">
-                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-green-600 hover:border-green-600 hover:text-white flex items-center justify-center transition-all"><i class="fa-brands fa-whatsapp text-sm"></i></a>
-                    <a href="https://instagram.com" target="_blank" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-pink-600 hover:border-pink-600 hover:text-white flex items-center justify-center transition-all"><i class="fa-brands fa-instagram text-sm"></i></a>
-                    <a href="tel:{{ store_settings.PHONE }}" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-brand-gold hover:border-brand-gold hover:text-white flex items-center justify-center transition-all"><i class="fa-solid fa-phone" style="font-size:11px;"></i></a>
+                    <a href="{% url 'store_locator' %}" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-brand-gold hover:border-brand-gold hover:text-white flex items-center justify-center transition-all" title="Visit Showroom"><i class="fa-solid fa-location-dot text-xs"></i></a>
+                    <a href="https://instagram.com" target="_blank" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-pink-600 hover:border-pink-600 hover:text-white flex items-center justify-center transition-all" title="Instagram"><i class="fa-brands fa-instagram text-sm"></i></a>
+                    <a href="tel:{{ store_settings.PHONE }}" class="w-9 h-9 rounded-full border border-gray-700 hover:bg-brand-gold hover:border-brand-gold hover:text-white flex items-center justify-center transition-all" title="Call Store"><i class="fa-solid fa-phone" style="font-size:11px;"></i></a>
                 </div>
             </div>
             <!-- Collections -->
@@ -238,7 +233,7 @@
                     <li><a href="{% url 'track_order' %}" class="hover:text-brand-gold2 transition-colors">Track Your Order</a></li>
                     <li><a href="{% url 'cart_view' %}" class="hover:text-brand-gold2 transition-colors">Shopping Bag</a></li>
                     <li><a href="{% url 'store_locator' %}" class="hover:text-brand-gold2 transition-colors">Find Our Store</a></li>
-                    <li><a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="hover:text-brand-gold2 transition-colors">WhatsApp Support</a></li>
+                    <li><a href="tel:{{ store_settings.PHONE }}" class="hover:text-brand-gold2 transition-colors">Customer Support</a></li>
                     <li><a href="/admin/" class="hover:text-brand-gold2 transition-colors">Owner Login</a></li>
                 </ul>
             </div>
@@ -259,7 +254,7 @@
             <p>&#169; 2026 SK Fashion, Ahilyanagar. All rights reserved.</p>
             <div class="flex flex-wrap items-center justify-center gap-4">
                 <span><i class="fa-solid fa-shield-halved text-green-500 mr-1"></i>100% Genuine Fabrics</span>
-                <span><i class="fa-solid fa-money-bill-wave text-brand-gold2 mr-1"></i>UPI &amp; COD</span>
+                <span><i class="fa-solid fa-credit-card text-brand-gold2 mr-1"></i>UPI &amp; Online Payment</span>
                 <span><i class="fa-solid fa-truck-fast text-blue-400 mr-1"></i>Pan-India Shipping</span>
             </div>
         </div>
@@ -284,13 +279,6 @@
     </a>
     <a href="{% url 'store_locator' %}" class="mob-nav-link"><i class="fa-solid fa-map-location-dot"></i><span>Store</span></a>
 </nav>
-
-<!-- Floating WhatsApp -->
-<a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%27d%20like%20to%20enquire%20about%20menswear." target="_blank"
-   class="hidden md:flex wa-pulse fixed bottom-8 right-8 z-40 text-white rounded-full shadow-2xl items-center gap-2 py-3.5 px-4 group transition-all hover:scale-105" style="background:#25D366;">
-    <i class="fa-brands fa-whatsapp" style="font-size:22px;"></i>
-    <span class="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs transition-all duration-300 text-sm font-bold pr-1">Chat with Store</span>
-</a>
 
 <!-- GLOBAL TOAST NOTIFICATION CONTAINER -->
 <div id="toastContainer" class="fixed bottom-20 md:bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-full max-w-sm px-4"></div>

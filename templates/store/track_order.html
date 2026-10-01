@@ -110,13 +110,12 @@
                     </div>
                 </div>
 
-                <!-- WhatsApp Support -->
+                <!-- Store Support -->
                 <div class="text-center pt-4 border-t border-slate-100">
-                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion,%20I%20have%20an%20inquiry%20regarding%20my%20Order%20#{{ order.order_id }}" 
-                       target="_blank"
-                       class="inline-flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-bold text-xs">
-                        <i class="fa-brands fa-whatsapp text-base"></i>
-                        <span>Need Help? Chat with SK Fashion Store Support</span>
+                    <a href="tel:{{ store_settings.PHONE }}" 
+                       class="inline-flex items-center gap-2 text-amber-700 hover:text-amber-800 font-bold text-xs">
+                        <i class="fa-solid fa-phone text-sm"></i>
+                        <span>Need Help with this Order? Call Store Desk (+91 {{ store_settings.PHONE }})</span>
                     </a>
                 </div>
 

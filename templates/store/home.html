@@ -56,10 +56,10 @@
 <section class="bg-white border-b border-brand-border py-7">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fdf3e3;"><i class="fa-solid fa-truck-fast" style="color:#b8862b;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Pan-India Delivery</div><div class="text-xs text-gray-500">Same-day in Ahilyanagar</div></div></div>
-            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#f0fdf4;"><i class="fa-brands fa-whatsapp" style="color:#25D366;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">1-Tap WhatsApp Order</div><div class="text-xs text-gray-500">Order in 60 seconds</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fdf3e3;"><i class="fa-solid fa-truck-fast" style="color:#b8862b;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Pan-India Delivery</div><div class="text-xs text-gray-500">Fast dispatch to your door</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#f0fdf4;"><i class="fa-solid fa-shield-halved" style="color:#16a34a;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">100% Secure Checkout</div><div class="text-xs text-gray-500">UPI, Cards &amp; NetBanking</div></div></div>
             <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;"><i class="fa-solid fa-store" style="color:#3b82f6;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Physical Showroom</div><div class="text-xs text-gray-500">Delhi Gate, Sarjepura</div></div></div>
-            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#faf5ff;"><i class="fa-solid fa-hand-holding-dollar" style="color:#9333ea;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Cash On Delivery</div><div class="text-xs text-gray-500">Pay when it arrives</div></div></div>
+            <div class="flex items-center gap-4"><div class="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#faf5ff;"><i class="fa-solid fa-award" style="color:#9333ea;font-size:20px;"></i></div><div><div class="font-bold text-sm text-brand-dark">Premium Quality</div><div class="text-xs text-gray-500">Curated Mens Fashion</div></div></div>
         </div>
     </div>
 </section>
@@ -115,9 +115,8 @@
                             <span class="font-extrabold text-brand-dark" style="font-size:17px;">&#8377;{{ product.discount_price }}</span>
                             {% if product.price > product.discount_price %}<span class="line-through text-gray-400" style="font-size:12px;">&#8377;{{ product.price }}</span>{% endif %}
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <a href="{% url 'product_detail' slug=product.slug %}" class="btn-dark text-xs py-2 px-3 rounded-xl">Select Size</a>
-                            <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}?text=Hi%20SK%20Fashion%2C%20I%20want%20{{ product.name|urlencode }}%20(%E2%82%B9{{ product.discount_price }})." target="_blank" class="btn-wa text-xs py-2 px-3 rounded-xl"><i class="fa-brands fa-whatsapp" style="font-size:13px;"></i> Order</a>
+                        <div>
+                            <a href="{% url 'product_detail' slug=product.slug %}" class="btn-dark w-full text-xs py-2.5 px-3 rounded-xl text-center justify-center flex items-center gap-1.5 font-bold">Select Size &amp; Buy <i class="fa-solid fa-arrow-right text-[10px]"></i></a>
                         </div>
                     </div>
                 </div>
@@ -146,7 +145,7 @@
                 </div>
                 <div class="flex flex-wrap gap-3">
                     <a href="https://maps.google.com/?q=Delhi+Gate+Sarjepura+Ahmednagar" target="_blank" class="btn-gold px-6 py-3 rounded-xl text-sm"><i class="fa-solid fa-diamond-turn-right"></i> Open Google Maps</a>
-                    <a href="https://wa.me/{{ store_settings.WHATSAPP_NUMBER }}" target="_blank" class="btn-wa px-6 py-3 rounded-xl text-sm"><i class="fa-brands fa-whatsapp" style="font-size:15px;"></i> Chat on WhatsApp</a>
+                    <a href="tel:{{ store_settings.PHONE }}" class="btn-outline px-6 py-3 rounded-xl text-sm" style="color:#fff;border-color:rgba(255,255,255,.2);"><i class="fa-solid fa-phone"></i> Call Store Now</a>
                 </div>
             </div>
             <div class="rounded-2xl overflow-hidden border shadow-2xl" style="aspect-ratio:16/10;border-color:rgba(255,255,255,.1);background:#1a1a1a;">
