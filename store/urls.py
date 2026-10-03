@@ -35,5 +35,6 @@ urlpatterns = [
     path('store-manager/pos/', views.pos_terminal, name='pos_terminal'),
     path('store-manager/pos/search/', views.pos_search_products, name='pos_search_products'),
     path('store-manager/pos/checkout/', views.pos_complete_sale, name='pos_complete_sale'),
+    path('store-manager/barcodes/', views.barcode_label_generator, name='barcode_label_generator'),
     path('sw.js', views.service_worker, name='service_worker'),
 ]

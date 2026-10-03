@@ -2,6 +2,8 @@
 {% block title %}Showroom POS Counter Billing | Sadguru Krupa Ahilyanagar{% endblock %}
 
 {% block extra_head %}
+<!-- HTML5-QRCode Scanner Library for Mobile & Webcam Scanning -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <style>
     @media print {
         body * {
@@ -28,6 +30,13 @@
         border-color: #b8862b;
         transform: translateY(-2px);
     }
+    @keyframes scanFlash {
+        0% { background-color: rgba(16, 185, 129, 0.2); }
+        100% { background-color: transparent; }
+    }
+    .scan-flash-highlight {
+        animation: scanFlash 0.8s ease-out;
+    }
 </style>
 {% endblock %}
 
@@ -53,18 +62,35 @@
             </div>
 
             <!-- Today's Counter Sales Metrics -->
-            <div class="flex items-center gap-3">
-                <div class="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-2 text-right">
-                    <span class="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">Today's Counter Sales</span>
-                    <span class="font-display font-black text-amber-950 text-base" id="posTodaySalesDisplay">
+            <!-- Today's Counter Sales Metrics & Barcode Actions -->
+            <div class="flex items-center gap-2.5">
+                <a href="{% url 'barcode_label_generator' %}" class="btn-outline px-3.5 py-2.5 rounded-xl text-xs font-bold hover:border-brand-gold flex items-center gap-1.5 shadow-sm" title="Generate and Print Barcode & Price Tags">
+                    <i class="fa-solid fa-tags text-brand-gold"></i>
+                    <span class="hidden sm:inline">Price Tags</span>
+                </a>
+                <button type="button" onclick="openCameraScannerModal()" class="btn-dark px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm" title="Scan Barcode using Phone/Webcam">
+                    <i class="fa-solid fa-camera"></i>
+                    <span class="hidden sm:inline">Camera Scan</span>
+                </button>
+                <div class="bg-amber-50 border border-amber-200 rounded-2xl px-3.5 py-2 text-right">
+                    <span class="text-[9px] font-bold text-amber-800 uppercase tracking-wider block">Today's Sales</span>
+                    <span class="font-display font-black text-amber-950 text-sm sm:text-base" id="posTodaySalesDisplay">
                         &#8377;{{ today_counter_revenue|floatformat:0 }}
                     </span>
-                    <span class="text-[10px] text-amber-700 ml-1">({{ today_counter_count }} bill{{ today_counter_count|pluralize }})</span>
+                    <span class="text-[9px] text-amber-700 ml-1">({{ today_counter_count }})</span>
                 </div>
-                <button type="button" onclick="resetRegisterCart()" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-red-300 hover:text-red-600">
-                    <i class="fa-solid fa-rotate-left mr-1"></i> Clear Cart
+                <button type="button" onclick="resetRegisterCart()" class="btn-outline px-3 py-2.5 rounded-xl text-xs font-bold hover:border-red-300 hover:text-red-600" title="Clear Register">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
             </div>
+        </div>
+
+        <!-- Scan Feedback Toast / Audio Alert Banner -->
+        <div id="posScanToast" class="hidden p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border shadow-sm transition-all">
+            <div class="flex items-center gap-2.5" id="posScanToastMsg"></div>
+            <button type="button" onclick="document.getElementById('posScanToast').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
 
         <!-- POS Workspace Split (Left: Catalog & Search / Right: Counter Register) -->
@@ -76,12 +102,28 @@
                 <!-- Search & Filters Card -->
                 <div class="bg-white p-5 rounded-3xl border border-brand-border shadow-sm space-y-3">
                     <div class="relative">
-                        <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                        <input type="text" id="posSearchInput" placeholder="Scan Barcode or Type Product Name / SKU / Fabric..."
+                        <i class="fa-solid fa-barcode absolute left-4 top-1/2 -translate-y-1/2 text-brand-gold text-base"></i>
+                        <input type="text" id="posSearchInput" placeholder="Scan Barcode Gun or Type Product Name / SKU / Fabric..."
                                oninput="handlePosSearch(this.value)"
                                autocomplete="off"
-                               class="w-full text-xs pl-11 pr-4 py-3 rounded-2xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none transition-all shadow-inner font-medium">
-                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 border border-gray-200 bg-white px-2 py-0.5 rounded-md">Live Sync</span>
+                               class="w-full text-xs pl-12 pr-4 py-3.5 rounded-2xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none transition-all shadow-inner font-medium">
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+                            <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Scanner Ready
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Barcode Scanner Helper Pill -->
+                    <div class="flex items-center justify-between text-[11px] px-1 text-gray-500">
+                        <div class="flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt text-brand-gold text-xs"></i>
+                            <span>Hardware barcode gun scans auto-add to bill.</span>
+                        </div>
+                        <button type="button" onclick="openCameraScannerModal()" class="text-brand-gold hover:underline font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-camera"></i> Mobile Camera Scan
+                        </button>
                     </div>
 
                     <!-- Category Quick Select -->
@@ -321,6 +363,39 @@
             </button>
         </div>
 
+    </div>
+</div>
+
+<!-- CAMERA SCANNER MODAL (Mobile & Webcam Live Barcode Reader) -->
+<div id="cameraScannerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm">
+    <div class="bg-white rounded-3xl max-w-sm w-full p-5 shadow-2xl border border-brand-border space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-brand-border">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-camera text-brand-gold text-base"></i>
+                <h3 class="font-display font-bold text-brand-dark text-sm sm:text-base">Garment Tag Camera Scanner</h3>
+            </div>
+            <button type="button" onclick="closeCameraScannerModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-500">
+            Aim your device camera at the 1D barcode or QR code on the Sadguru Krupa price tag.
+        </p>
+
+        <!-- Camera Viewport Box -->
+        <div class="relative rounded-2xl overflow-hidden border-2 border-brand-gold bg-black aspect-square w-full flex items-center justify-center">
+            <div id="cameraScannerViewport" class="w-full h-full"></div>
+            <div class="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-red-500 opacity-75 shadow-[0_0_8px_rgba(239,68,68,0.8)] pointer-events-none"></div>
+        </div>
+
+        <div id="cameraScannerStatus" class="text-center text-xs font-bold text-gray-600">
+            Ready to scan tag...
+        </div>
+
+        <button type="button" onclick="closeCameraScannerModal()" class="btn-outline w-full py-2.5 rounded-xl text-xs font-bold">
+            Done / Close Scanner
+        </button>
     </div>
 </div>
 {% endblock %}
@@ -672,12 +747,271 @@ function closeReceiptModal() {
     document.getElementById('posSearchInput').focus();
 }
 
-// Shortcut: press '/' to focus search input
+/* ==========================================================================
+   AUDIO BEEP & SCAN FEEDBACK
+   ========================================================================== */
+function playScanBeep(success = true) {
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (success) {
+            // High-pitched retail cash register "Beep!" (880Hz)
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        } else {
+            // Low error buzz
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(220, ctx.currentTime);
+            gain.gain.setValueAtTime(0.35, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.25);
+        }
+    } catch (e) {
+        console.warn('Audio feedback warning:', e);
+    }
+}
+
+let toastHideTimer = null;
+function showScanBanner(message, type = 'success') {
+    const toast = document.getElementById('posScanToast');
+    const msg = document.getElementById('posScanToastMsg');
+    if (!toast || !msg) return;
+
+    clearTimeout(toastHideTimer);
+    toast.className = 'p-3.5 rounded-2xl text-xs font-bold flex items-center justify-between border shadow-sm transition-all';
+
+    if (type === 'success') {
+        toast.classList.add('bg-emerald-50', 'border-emerald-200', 'text-emerald-900');
+        msg.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 text-sm"></i> <span>${message}</span>`;
+    } else if (type === 'error') {
+        toast.classList.add('bg-red-50', 'border-red-200', 'text-red-900');
+        msg.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-600 text-sm"></i> <span>${message}</span>`;
+    } else {
+        toast.classList.add('bg-amber-50', 'border-amber-200', 'text-amber-900');
+        msg.innerHTML = `<i class="fa-solid fa-info-circle text-amber-600 text-sm"></i> <span>${message}</span>`;
+    }
+
+    toast.classList.remove('hidden');
+
+    // Highlight register cart
+    const cartCard = document.getElementById('posRegisterCartList');
+    if (cartCard && type === 'success') {
+        cartCard.classList.add('scan-flash-highlight');
+        setTimeout(() => cartCard.classList.remove('scan-flash-highlight'), 800);
+    }
+
+    toastHideTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 4000);
+}
+
+/* ==========================================================================
+   BARCODE LOOKUP & AUTO-ADD TO REGISTER
+   ========================================================================== */
+async function handleBarcodeScanned(barcode) {
+    if (!barcode) return;
+    const cleanCode = barcode.trim();
+    if (!cleanCode) return;
+
+    try {
+        const res = await fetch(`{% url 'pos_search_products' %}?barcode=${encodeURIComponent(cleanCode)}`);
+        const data = await res.json();
+
+        if (data.status === 'success' && data.exact_match) {
+            const item = data.exact_match;
+            if (item.stock_quantity > 0) {
+                addToRegisterCart(item.product_id, item.name, item.size, item.price, item.stock_quantity);
+                playScanBeep(true);
+                showScanBanner(`Scanned: ${item.name} (${item.size}) &bull; ₹${item.price} added to register!`, 'success');
+            } else {
+                playScanBeep(false);
+                showScanBanner(`Out of Stock: ${item.name} (${item.size}) has 0 units in showroom!`, 'error');
+            }
+            // Clear search box so it's fresh for next scan
+            const searchInput = document.getElementById('posSearchInput');
+            if (searchInput) searchInput.value = '';
+        } else if (data.status === 'success' && data.products && data.products.length > 0) {
+            // Base product matched (multiple sizes available): render in grid
+            renderProductGrid(data.products);
+            playScanBeep(true);
+            showScanBanner(`Product found. Please select size for: "${cleanCode}"`, 'info');
+        } else {
+            playScanBeep(false);
+            showScanBanner(`No garment found matching barcode: "${cleanCode}"`, 'error');
+        }
+    } catch (err) {
+        console.error('Barcode scan lookup error:', err);
+        playScanBeep(false);
+        showScanBanner('Network error looking up barcode.', 'error');
+    }
+}
+
+/* ==========================================================================
+   HARDWARE USB / BLUETOOTH BARCODE GUN GLOBAL LISTENER
+   ========================================================================== */
+let barcodeGunBuffer = '';
+let lastKeyTimestamp = Date.now();
+
 document.addEventListener('keydown', (e) => {
-    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+    const activeEl = document.activeElement;
+    const isEditingCustomerField = activeEl && (
+        activeEl.id === 'posCustomerName' ||
+        activeEl.id === 'posCustomerPhone' ||
+        activeEl.id === 'posDiscountInput' ||
+        activeEl.id === 'posCashReceived'
+    );
+
+    const currentTime = Date.now();
+    const timeDelta = currentTime - lastKeyTimestamp;
+    lastKeyTimestamp = currentTime;
+
+    // Enter key is sent by barcode guns at end of scan
+    if (e.key === 'Enter') {
+        const searchInput = document.getElementById('posSearchInput');
+        const fromSearchInput = activeEl === searchInput && searchInput.value.trim().length >= 3;
+        const fromBuffer = barcodeGunBuffer.trim().length >= 3;
+
+        if (fromSearchInput) {
+            e.preventDefault();
+            const codeToScan = searchInput.value.trim();
+            searchInput.value = '';
+            handleBarcodeScanned(codeToScan);
+            barcodeGunBuffer = '';
+            return;
+        }
+
+        if (fromBuffer && !isEditingCustomerField) {
+            e.preventDefault();
+            const codeToScan = barcodeGunBuffer.trim();
+            barcodeGunBuffer = '';
+            handleBarcodeScanned(codeToScan);
+            return;
+        }
+
+        barcodeGunBuffer = '';
+        return;
+    }
+
+    // Accumulate characters
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        // If typing speed is human (>120ms between keys) and not in search input, reset buffer
+        if (timeDelta > 120 && activeEl !== document.getElementById('posSearchInput')) {
+            barcodeGunBuffer = '';
+        }
+        if (!isEditingCustomerField) {
+            barcodeGunBuffer += e.key;
+        }
+    }
+
+    // Shortcut: Press '/' to jump to search input
+    if (e.key === '/' && activeEl && activeEl.tagName !== 'INPUT') {
         e.preventDefault();
-        document.getElementById('posSearchInput').focus();
+        const sInput = document.getElementById('posSearchInput');
+        if (sInput) sInput.focus();
     }
 });
+
+/* ==========================================================================
+   CAMERA BARCODE & QR SCANNER (html5-qrcode)
+   ========================================================================== */
+let html5QrScannerInstance = null;
+let lastCameraScanCode = null;
+let cameraCooldownTimer = null;
+
+function openCameraScannerModal() {
+    const modal = document.getElementById('cameraScannerModal');
+    const statusEl = document.getElementById('cameraScannerStatus');
+    modal.classList.remove('hidden');
+    statusEl.innerText = 'Requesting camera access...';
+
+    if (typeof Html5Qrcode === 'undefined') {
+        statusEl.innerText = 'Error: Camera scanner library could not be loaded.';
+        return;
+    }
+
+    try {
+        if (!html5QrScannerInstance) {
+            html5QrScannerInstance = new Html5Qrcode("cameraScannerViewport");
+        }
+
+        const config = {
+            fps: 10,
+            qrbox: { width: 220, height: 220 },
+            formatsToSupport: [
+                Html5QrcodeSupportedFormats.CODE_128,
+                Html5QrcodeSupportedFormats.CODE_39,
+                Html5QrcodeSupportedFormats.EAN_13,
+                Html5QrcodeSupportedFormats.QR_CODE
+            ]
+        };
+
+        html5QrScannerInstance.start(
+            { facingMode: "environment" },
+            config,
+            (decodedText, decodedResult) => {
+                // Success callback
+                if (decodedText === lastCameraScanCode) return; // Prevent duplicate rapid trigger
+                lastCameraScanCode = decodedText;
+
+                // If QR code contains URL with tag, extract the barcode
+                let rawCode = decodedText;
+                if (rawCode.includes('/tag/')) {
+                    rawCode = rawCode.split('/tag/')[1].split('/')[0];
+                }
+
+                statusEl.innerHTML = `<span class="text-emerald-600"><i class="fa-solid fa-check"></i> Scanned: <strong>${rawCode}</strong></span>`;
+                handleBarcodeScanned(rawCode);
+
+                clearTimeout(cameraCooldownTimer);
+                cameraCooldownTimer = setTimeout(() => {
+                    lastCameraScanCode = null;
+                    statusEl.innerText = 'Ready to scan next garment tag...';
+                }, 1600);
+            },
+            (errorMessage) => {
+                // scanning errors are normal frames where no code was found
+            }
+        ).then(() => {
+            statusEl.innerText = 'Point camera at garment barcode or QR tag...';
+        }).catch(err => {
+            console.error('Camera start error:', err);
+            statusEl.innerText = 'Camera access denied or camera not found.';
+        });
+
+    } catch (err) {
+        console.error('Html5Qrcode exception:', err);
+        statusEl.innerText = 'Camera scanner error: ' + err.message;
+    }
+}
+
+function closeCameraScannerModal() {
+    const modal = document.getElementById('cameraScannerModal');
+    modal.classList.add('hidden');
+    if (html5QrScannerInstance) {
+        try {
+            html5QrScannerInstance.stop().then(() => {
+                html5QrScannerInstance.clear();
+                html5QrScannerInstance = null;
+            }).catch(e => {
+                console.warn('Error stopping camera:', e);
+                html5QrScannerInstance = null;
+            });
+        } catch (e) {
+            html5QrScannerInstance = null;
+        }
+    }
+}
 </script>
 {% endblock %}

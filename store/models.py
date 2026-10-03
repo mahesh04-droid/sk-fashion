@@ -91,6 +91,10 @@ class Product(models.Model):
         return 0
 
     @property
+    def barcode(self):
+        return self.sku or f"SKF-{self.id}"
+
+    @property
     def main_image(self):
         if self.image:
             return self.image.url
@@ -143,6 +147,12 @@ class ProductVariant(models.Model):
 
     class Meta:
         unique_together = ('product', 'size')
+
+    @property
+    def barcode(self):
+        base_sku = self.product.sku if (self.product and self.product.sku) else f"SKF-{self.product_id}"
+        clean_size = str(self.size).replace(' ', '').upper()
+        return f"{base_sku}-{clean_size}"
 
     def __str__(self):
         return f"{self.product.name} - Size {self.size} ({self.stock_quantity} in stock)"

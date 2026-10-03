@@ -1388,13 +1388,66 @@ def pos_terminal(request):
 def pos_search_products(request):
     """Instant JSON search for POS counter barcode / product / SKU."""
     q = request.GET.get('q', '').strip()
+    barcode_scan = request.GET.get('barcode', '').strip()
     category_id = request.GET.get('category')
+
+    exact_item = None
+    scan_query = barcode_scan or q
+
+    # Check for direct variant barcode or SKU scan
+    if scan_query:
+        # Check SKU-SIZE format (e.g. SKF-MENS-D33C-L)
+        if '-' in scan_query:
+            parts = scan_query.rsplit('-', 1)
+            cand_sku, cand_size = parts[0].strip(), parts[1].strip()
+            matched_var = ProductVariant.objects.filter(
+                Q(product__sku__iexact=cand_sku) | Q(product__sku__iexact=scan_query),
+                size__iexact=cand_size
+            ).select_related('product', 'product__category').first()
+
+            if not matched_var:
+                for v in ProductVariant.objects.filter(product__sku__iexact=cand_sku).select_related('product'):
+                    if v.size.replace(' ', '').upper() == cand_size.upper():
+                        matched_var = v
+                        break
+
+            if matched_var:
+                exact_item = {
+                    'product_id': matched_var.product.id,
+                    'name': matched_var.product.name,
+                    'sku': matched_var.product.sku,
+                    'size': matched_var.size,
+                    'price': float(matched_var.product.discount_price),
+                    'stock_quantity': matched_var.stock_quantity,
+                    'barcode': matched_var.barcode,
+                }
+
+        if not exact_item:
+            # Check if scan_query matches a product SKU or ID exactly
+            prod = Product.objects.filter(
+                Q(sku__iexact=scan_query) | Q(id__iexact=scan_query if scan_query.isdigit() else -1)
+            ).prefetch_related('variants').first()
+            if prod:
+                variants_list = list(prod.variants.all())
+                if len(variants_list) == 1:
+                    v = variants_list[0]
+                    exact_item = {
+                        'product_id': prod.id,
+                        'name': prod.name,
+                        'sku': prod.sku,
+                        'size': v.size,
+                        'price': float(prod.discount_price),
+                        'stock_quantity': v.stock_quantity,
+                        'barcode': v.barcode,
+                    }
 
     products = Product.objects.filter(is_available=True).prefetch_related('variants')
     if q:
+        clean_q = q.rsplit('-', 1)[0] if ('-' in q and len(q) > 6) else q
         products = products.filter(
             Q(name__icontains=q) |
             Q(sku__icontains=q) |
+            Q(sku__icontains=clean_q) |
             Q(fabric__icontains=q) |
             Q(category__name__icontains=q)
         )
@@ -1409,11 +1462,13 @@ def pos_search_products(request):
                 'id': v.id,
                 'size': v.size,
                 'stock_quantity': v.stock_quantity,
+                'barcode': v.barcode,
             })
         results.append({
             'id': p.id,
             'name': p.name,
             'sku': p.sku or f'SKF-{p.id}',
+            'barcode': p.barcode,
             'category': p.category.name if p.category else 'Menswear',
             'price': float(p.price),
             'discount_price': float(p.discount_price),
@@ -1421,7 +1476,7 @@ def pos_search_products(request):
             'variants': variants,
         })
 
-    return JsonResponse({'status': 'success', 'products': results})
+    return JsonResponse({'status': 'success', 'products': results, 'exact_match': exact_item})
 
 
 @staff_or_admin_required
@@ -1529,5 +1584,52 @@ def pos_complete_sale(request):
     })
 
 
+@staff_or_admin_required
+def barcode_label_generator(request):
+    """
+    Showroom utility to generate printable barcode & QR price tags for garments.
+    Supports A4 sticker sheets (24 labels: 3x8) and 50x25mm / 50x35mm thermal rolls.
+    """
+    category_id = request.GET.get('category', '').strip()
+    search_q = request.GET.get('q', '').strip()
+    product_id = request.GET.get('product_id', '').strip()
 
+    categories = Category.objects.all().order_by('name')
+    products = Product.objects.filter(is_available=True).prefetch_related('variants', 'category').order_by('name')
 
+    if product_id:
+        products = products.filter(id=product_id)
+    if category_id:
+        products = products.filter(category_id=category_id)
+    if search_q:
+        products = products.filter(
+            Q(name__icontains=search_q) |
+            Q(sku__icontains=search_q) |
+            Q(fabric__icontains=search_q)
+        )
+
+    product_list_data = []
+    for p in products[:60]:
+        variants_data = []
+        for v in p.variants.all():
+            variants_data.append({
+                'id': v.id,
+                'size': v.size,
+                'stock_quantity': v.stock_quantity,
+                'barcode': v.barcode,
+            })
+        product_list_data.append({
+            'product': p,
+            'variants': variants_data,
+            'has_variants': len(variants_data) > 0,
+        })
+
+    context = {
+        'categories': categories,
+        'selected_category': category_id,
+        'search_q': search_q,
+        'selected_product_id': product_id,
+        'products_data': product_list_data,
+        'store_settings': getattr(settings, 'STORE_SETTINGS', {}),
+    }
+    return render(request, 'store/barcode_labels.html', context)

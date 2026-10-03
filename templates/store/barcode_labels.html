@@ -1,0 +1,770 @@
+{% extends 'base.html' %}
+{% block title %}Garment Barcode &amp; QR Price Tag Studio | Sadguru Krupa Ahilyanagar{% endblock %}
+
+{% block extra_head %}
+<!-- JsBarcode for crisp Code128 Barcodes -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<!-- QRCode.js for 2D QR Code Generation -->
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+
+<style>
+/* ==========================================================================
+   PRINT STYLES FOR STICKER SHEETS & THERMAL ROLLS
+   ========================================================================== */
+@media print {
+    /* Hide everything on screen except print preview container */
+    body * {
+        visibility: hidden !important;
+    }
+    #barcodePrintArea, #barcodePrintArea * {
+        visibility: visible !important;
+    }
+    #barcodePrintArea {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+    .no-print, header, footer, nav, .screen-only {
+        display: none !important;
+    }
+
+    /* Standard A4 24-Up Sticker Sheets (3 cols x 8 rows, ~70mm x 37mm) */
+    .print-mode-a4 {
+        display: grid !important;
+        grid-template-columns: repeat(3, 70mm) !important;
+        grid-auto-rows: 37mm !important;
+        gap: 0 !important;
+        justify-content: center !important;
+        align-content: start !important;
+        width: 210mm !important;
+        margin: 0 auto !important;
+        padding-top: 5mm !important;
+    }
+
+    .print-mode-a4 .label-card {
+        width: 70mm !important;
+        height: 37mm !important;
+        max-width: 70mm !important;
+        max-height: 37mm !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        border: 1px dashed #d1d5db !important;
+        padding: 2.5mm !important;
+        overflow: hidden !important;
+    }
+
+    /* Desktop Thermal Barcode Roll (50mm x 25mm) */
+    .print-mode-thermal-50x25 {
+        display: block !important;
+        width: 50mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .print-mode-thermal-50x25 .label-card {
+        width: 50mm !important;
+        height: 25mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        padding: 1.5mm !important;
+        overflow: hidden !important;
+    }
+
+    /* Desktop Thermal Barcode Roll (50mm x 35mm) */
+    .print-mode-thermal-50x35 {
+        display: block !important;
+        width: 50mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .print-mode-thermal-50x35 .label-card {
+        width: 50mm !important;
+        height: 35mm !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        padding: 2mm !important;
+        overflow: hidden !important;
+    }
+
+    /* Garment Hang Tag (60mm x 90mm) */
+    .print-mode-hangtag {
+        display: grid !important;
+        grid-template-columns: repeat(3, 60mm) !important;
+        grid-auto-rows: 90mm !important;
+        gap: 3mm !important;
+        justify-content: center !important;
+        width: 210mm !important;
+        margin: 0 auto !important;
+        padding: 5mm 0 !important;
+    }
+
+    .print-mode-hangtag .label-card {
+        width: 60mm !important;
+        height: 90mm !important;
+        box-sizing: border-box !important;
+        page-break-inside: avoid !important;
+        border: 1px solid #333 !important;
+        border-radius: 4mm !important;
+        padding: 4mm !important;
+    }
+}
+
+/* Screen Preview Styling */
+.screen-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.label-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-brand-surface min-h-screen py-6 border-b border-brand-border screen-only">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+
+        <!-- Top Header & Navigation -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-3xl border border-brand-border shadow-sm">
+            <div class="flex items-center gap-4">
+                <a href="{% url 'store_manager' %}" class="w-10 h-10 rounded-2xl bg-brand-surface hover:bg-gray-200 border border-brand-border flex items-center justify-center text-brand-dark transition-colors" title="Back to Store Manager">
+                    <i class="fa-solid fa-arrow-left text-sm"></i>
+                </a>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-brand-gold"></span>
+                        <span class="text-[10px] font-extrabold uppercase tracking-widest text-brand-gold">Showroom Tag Printing Studio</span>
+                    </div>
+                    <h1 class="font-display font-bold text-brand-dark text-xl sm:text-2xl">
+                        Barcode &amp; QR Price Tag Generator
+                    </h1>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+                <a href="{% url 'pos_terminal' %}" class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-brand-gold flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-cash-register text-brand-gold"></i>
+                    <span>Open POS Terminal</span>
+                </a>
+                <button type="button" onclick="triggerLabelPrint()" class="btn-gold px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md hover:scale-[1.02] transition-transform">
+                    <i class="fa-solid fa-print"></i>
+                    <span>Print Labels (<span id="totalLabelsBadge">0</span>)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Filter & Tag Configuration Bar -->
+        <div class="bg-white p-5 rounded-3xl border border-brand-border shadow-sm space-y-4">
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-center">
+                <!-- Search Garments -->
+                <div class="md:col-span-4 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                    <input type="text" id="tagSearchInput" value="{{ search_q }}" placeholder="Search by Garment Name, SKU, Fabric..."
+                           onkeyup="filterGarmentsList()"
+                           class="w-full text-xs pl-10 pr-3 py-2.5 rounded-xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none">
+                </div>
+
+                <!-- Category Filter -->
+                <div class="md:col-span-3">
+                    <select id="tagCategorySelect" onchange="filterByCategory(this.value)"
+                            class="w-full text-xs px-3 py-2.5 rounded-xl border border-brand-border bg-brand-surface focus:bg-white focus:border-brand-gold outline-none font-medium">
+                        <option value="">All Menswear Categories</option>
+                        {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Label Sheet Format Selector -->
+                <div class="md:col-span-3">
+                    <select id="labelFormatSelect" onchange="changeLabelFormat(this.value)"
+                            class="w-full text-xs px-3 py-2.5 rounded-xl border border-brand-border bg-amber-50 text-amber-950 font-bold focus:border-brand-gold outline-none">
+                        <option value="a4" selected>Standard A4 Sheet (24 Labels: 3x8 - 70x37mm)</option>
+                        <option value="thermal-50x25">Thermal Roll (50mm x 25mm - TVS/TCS/Zebra)</option>
+                        <option value="thermal-50x35">Thermal Roll (50mm x 35mm - Tall)</option>
+                        <option value="hangtag">Garment Hang Tag (60mm x 90mm Boutique Card)</option>
+                    </select>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="md:col-span-2 flex items-center gap-1.5 justify-end">
+                    <button type="button" onclick="selectAllVariants(true)" class="px-2.5 py-2 rounded-lg border border-brand-border bg-brand-surface text-gray-700 hover:bg-gray-200 text-[11px] font-bold" title="Select All">
+                        All
+                    </button>
+                    <button type="button" onclick="selectAllVariants(false)" class="px-2.5 py-2 rounded-lg border border-brand-border bg-brand-surface text-gray-700 hover:bg-gray-200 text-[11px] font-bold" title="Clear All">
+                        None
+                    </button>
+                    <button type="button" onclick="autofillStockQuantities()" class="px-2.5 py-2 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 text-[11px] font-bold flex items-center gap-1" title="Set copies equal to in-stock units">
+                        <i class="fa-solid fa-boxes-stacked"></i> Auto-Stock
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tag Content Customization Options -->
+            <div class="flex flex-wrap items-center gap-4 pt-3 border-t border-brand-border text-xs text-gray-700">
+                <span class="font-bold text-gray-500 uppercase tracking-wider text-[10px]">Sticker Layout Options:</span>
+                <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                    <input type="checkbox" id="optShowBarcode1D" checked onchange="regenerateLabels()" class="rounded text-brand-gold focus:ring-brand-gold">
+                    <span>1D Barcode (Code128)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                    <input type="checkbox" id="optShowQrCode" checked onchange="regenerateLabels()" class="rounded text-brand-gold focus:ring-brand-gold">
+                    <span>2D QR Code</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                    <input type="checkbox" id="optShowSaveBadge" checked onchange="regenerateLabels()" class="rounded text-brand-gold focus:ring-brand-gold">
+                    <span>"SAVE ₹X" Discount Badge</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer font-medium">
+                    <input type="checkbox" id="optShowExchangePolicy" checked onchange="regenerateLabels()" class="rounded text-brand-gold focus:ring-brand-gold">
+                    <span>Showroom 7-Day Exchange Note</span>
+                </label>
+            </div>
+
+        </div>
+
+        <!-- MAIN DUAL PANE: (Left: Product Variant Selection / Right: Real-time Sheet Preview) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- LEFT PANE: Garments & Variants Selector (Col 5) -->
+            <div class="lg:col-span-5 bg-white rounded-3xl border border-brand-border shadow-sm p-5 space-y-4 max-h-[750px] overflow-y-auto">
+                <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                    <h2 class="font-display font-bold text-brand-dark text-base">Select Garments to Tag</h2>
+                    <span class="text-xs text-gray-500 font-semibold" id="garmentCountDisplay">{{ products_data|length }} Products</span>
+                </div>
+
+                <div class="space-y-3" id="garmentListContainer">
+                    {% for item in products_data %}
+                    {% with p=item.product %}
+                    <div class="garment-row border border-brand-border rounded-2xl p-3.5 space-y-2.5 bg-brand-surface/40 hover:bg-white transition-all"
+                         data-name="{{ p.name|lower }}"
+                         data-sku="{{ p.sku|lower }}"
+                         data-fabric="{{ p.fabric|lower }}"
+                         data-category="{{ p.category_id }}">
+                        
+                        <!-- Product Header Info -->
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <img src="{{ p.main_image }}" alt="" class="w-10 h-12 rounded-lg object-cover object-top border border-brand-border shrink-0">
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-brand-dark text-xs truncate" title="{{ p.name }}">{{ p.name }}</h4>
+                                    <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+                                        <span class="font-mono font-bold text-brand-gold">{{ p.sku|default:"SKF-ITEM" }}</span>
+                                        <span>&bull;</span>
+                                        <span class="font-extrabold text-brand-dark">&#8377;{{ p.discount_price }}</span>
+                                        {% if p.price > p.discount_price %}
+                                        <span class="line-through text-gray-400">&#8377;{{ p.price }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="toggleAllSizesForProduct(this)" class="text-[10px] font-bold text-brand-gold hover:underline whitespace-nowrap">
+                                Toggle Sizes
+                            </button>
+                        </div>
+
+                        <!-- Variant Size Rows -->
+                        <div class="space-y-1.5 pt-1.5 border-t border-brand-border/60">
+                            {% for v in item.variants %}
+                            <div class="variant-item flex items-center justify-between text-xs py-1 px-2 rounded-lg hover:bg-amber-50/60"
+                                 data-product-id="{{ p.id }}"
+                                 data-product-name="{{ p.name|escapejs }}"
+                                 data-product-sku="{{ p.sku|escapejs }}"
+                                 data-category-name="{{ p.category.name|default:'Menswear'|escapejs }}"
+                                 data-fabric="{{ p.fabric|default:'Premium Cotton'|escapejs }}"
+                                 data-fit="{{ p.fit|default:'Regular Fit'|escapejs }}"
+                                 data-mrp="{{ p.price }}"
+                                 data-offer="{{ p.discount_price }}"
+                                 data-size="{{ v.size }}"
+                                 data-stock="{{ v.stock_quantity }}"
+                                 data-barcode="{{ v.barcode }}">
+                                
+                                <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                                    <input type="checkbox" class="var-checkbox rounded text-brand-gold focus:ring-brand-gold" onchange="onVariantSelectionChange()">
+                                    <span class="font-bold text-brand-dark text-xs">Size {{ v.size }}</span>
+                                    <span class="text-[10px] text-gray-500">({{ v.stock_quantity }} in showroom)</span>
+                                </label>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-[10px] text-gray-400 font-mono hidden sm:inline">{{ v.barcode }}</span>
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-[10px] text-gray-500 font-medium">Qty:</span>
+                                        <input type="number" class="var-qty-input w-12 text-center text-xs font-bold py-0.5 rounded border border-brand-border bg-white outline-none focus:border-brand-gold"
+                                               value="1" min="1" max="500" onchange="onVariantSelectionChange()">
+                                    </div>
+                                </div>
+
+                            </div>
+                            {% empty %}
+                            <!-- Single standard size fallback -->
+                            <div class="variant-item flex items-center justify-between text-xs py-1 px-2 rounded-lg"
+                                 data-product-id="{{ p.id }}"
+                                 data-product-name="{{ p.name|escapejs }}"
+                                 data-product-sku="{{ p.sku|escapejs }}"
+                                 data-category-name="{{ p.category.name|default:'Menswear'|escapejs }}"
+                                 data-fabric="{{ p.fabric|default:'Premium Fabric'|escapejs }}"
+                                 data-fit="{{ p.fit|default:'Regular'|escapejs }}"
+                                 data-mrp="{{ p.price }}"
+                                 data-offer="{{ p.discount_price }}"
+                                 data-size="Free Size"
+                                 data-stock="10"
+                                 data-barcode="{{ p.barcode }}">
+                                <label class="flex items-center gap-2 cursor-pointer flex-1">
+                                    <input type="checkbox" class="var-checkbox rounded text-brand-gold focus:ring-brand-gold" onchange="onVariantSelectionChange()">
+                                    <span class="font-bold text-brand-dark text-xs">Standard Free Size</span>
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] text-gray-500 font-medium">Qty:</span>
+                                    <input type="number" class="var-qty-input w-12 text-center text-xs font-bold py-0.5 rounded border border-brand-border bg-white outline-none focus:border-brand-gold"
+                                           value="1" min="1" max="500" onchange="onVariantSelectionChange()">
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                    {% endwith %}
+                    {% empty %}
+                    <div class="text-center py-12 text-gray-400 text-xs">
+                        No garments found matching filters.
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- RIGHT PANE: Live Sheet Print Preview (Col 7) -->
+            <div class="lg:col-span-7 bg-white rounded-3xl border border-brand-border shadow-sm p-5 sm:p-6 space-y-4">
+                
+                <div class="flex items-center justify-between pb-3 border-b border-brand-border">
+                    <div>
+                        <h2 class="font-display font-bold text-brand-dark text-base">Live Printable Label Sheet Preview</h2>
+                        <p class="text-[11px] text-gray-500" id="previewFormatDescription">
+                            Layout: Standard A4 Sticker Sheet (24 labels: 3 columns x 8 rows)
+                        </p>
+                    </div>
+                    <button type="button" onclick="triggerLabelPrint()" class="btn-dark px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+                        <i class="fa-solid fa-print"></i> <span>Print Now</span>
+                    </button>
+                </div>
+
+                <!-- Empty State -->
+                <div id="previewEmptyPlaceholder" class="py-20 text-center text-gray-400 space-y-3">
+                    <i class="fa-solid fa-barcode text-5xl text-gray-300 block"></i>
+                    <p class="text-sm font-semibold text-gray-600">No sticker labels selected yet.</p>
+                    <p class="text-xs text-gray-400 max-w-sm mx-auto">
+                        Check any sizes from the list on the left or click <strong>"Auto-Stock"</strong> to generate price tags for your showroom racks.
+                    </p>
+                </div>
+
+                <!-- Preview Area Container (Rendered Cards) -->
+                <div id="screenPreviewScrollBox" class="max-h-[680px] overflow-y-auto p-3 bg-gray-50 rounded-2xl border border-dashed border-gray-200 hidden">
+                    <div id="screenPreviewGrid" class="screen-preview-grid"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- ==========================================================================
+     OFFSCREEN / DEDICATED PRINT AREA (Visible ONLY during window.print())
+     ========================================================================== -->
+<div id="barcodePrintArea" class="print-mode-a4"></div>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedVariantsList = [];
+let currentLayoutFormat = 'a4';
+
+// Initialize with first 2 garments selected for instant preview
+document.addEventListener('DOMContentLoaded', () => {
+    const firstCheckboxes = document.querySelectorAll('.garment-row:nth-child(-n+2) .var-checkbox');
+    firstCheckboxes.forEach(cb => { cb.checked = true; });
+    onVariantSelectionChange();
+});
+
+// Format Change Handler
+function changeLabelFormat(fmt) {
+    currentLayoutFormat = fmt;
+    const printArea = document.getElementById('barcodePrintArea');
+    const desc = document.getElementById('previewFormatDescription');
+
+    printArea.className = '';
+    if (fmt === 'a4') {
+        printArea.classList.add('print-mode-a4');
+        desc.innerText = 'Layout: Standard A4 Sticker Sheet (24 labels: 3 columns x 8 rows)';
+    } else if (fmt === 'thermal-50x25') {
+        printArea.classList.add('print-mode-thermal-50x25');
+        desc.innerText = 'Layout: Desktop Thermal Label Roll (50mm x 25mm)';
+    } else if (fmt === 'thermal-50x35') {
+        printArea.classList.add('print-mode-thermal-50x35');
+        desc.innerText = 'Layout: Desktop Thermal Label Roll (50mm x 35mm - High Detail)';
+    } else if (fmt === 'hangtag') {
+        printArea.classList.add('print-mode-hangtag');
+        desc.innerText = 'Layout: Boutique Garment Hang Tag (60mm x 90mm Premium Card)';
+    }
+
+    renderLabelsPreview();
+}
+
+// Select / Deselect All
+function selectAllVariants(checked) {
+    const visibleCheckboxes = document.querySelectorAll('.garment-row:not(.hidden) .var-checkbox');
+    visibleCheckboxes.forEach(cb => { cb.checked = checked; });
+    onVariantSelectionChange();
+}
+
+// Toggle all sizes of a single product
+function toggleAllSizesForProduct(btn) {
+    const row = btn.closest('.garment-row');
+    const cbs = row.querySelectorAll('.var-checkbox');
+    const anyChecked = Array.from(cbs).some(c => c.checked);
+    cbs.forEach(c => { c.checked = !anyChecked; });
+    onVariantSelectionChange();
+}
+
+// Auto-fill copies matching showroom stock quantities
+function autofillStockQuantities() {
+    const variantItems = document.querySelectorAll('.variant-item');
+    variantItems.forEach(item => {
+        const stock = parseInt(item.dataset.stock) || 1;
+        const cb = item.querySelector('.var-checkbox');
+        const input = item.querySelector('.var-qty-input');
+        if (stock > 0) {
+            cb.checked = true;
+            input.value = Math.min(stock, 50); // cap default batch at 50 per size
+        } else {
+            cb.checked = false;
+        }
+    });
+    onVariantSelectionChange();
+}
+
+// Filter Garments in Left Pane
+function filterGarmentsList() {
+    const q = document.getElementById('tagSearchInput').value.trim().toLowerCase();
+    const cat = document.getElementById('tagCategorySelect').value;
+    const rows = document.querySelectorAll('.garment-row');
+    let visibleCount = 0;
+
+    rows.forEach(r => {
+        const name = r.dataset.name || '';
+        const sku = r.dataset.sku || '';
+        const fabric = r.dataset.fabric || '';
+        const rCat = r.dataset.category || '';
+
+        const matchQ = !q || name.includes(q) || sku.includes(q) || fabric.includes(q);
+        const matchCat = !cat || rCat === cat;
+
+        if (matchQ && matchCat) {
+            r.classList.remove('hidden');
+            visibleCount++;
+        } else {
+            r.classList.add('hidden');
+        }
+    });
+
+    document.getElementById('garmentCountDisplay').innerText = `${visibleCount} Products`;
+}
+
+function filterByCategory(catId) {
+    filterGarmentsList();
+}
+
+// Collect selected variants & quantities
+function onVariantSelectionChange() {
+    selectedVariantsList = [];
+    const variantItems = document.querySelectorAll('.variant-item');
+
+    variantItems.forEach(el => {
+        const cb = el.querySelector('.var-checkbox');
+        if (cb && cb.checked) {
+            const qtyInput = el.querySelector('.var-qty-input');
+            const qty = Math.max(1, parseInt(qtyInput.value) || 1);
+
+            const mrp = parseFloat(el.dataset.mrp) || 0;
+            const offer = parseFloat(el.dataset.offer) || 0;
+            const discountPct = mrp > offer && mrp > 0 ? Math.round(((mrp - offer) / mrp) * 100) : 0;
+            const saveAmount = Math.max(0, mrp - offer);
+
+            selectedVariantsList.push({
+                productId: el.dataset.productId,
+                productName: el.dataset.productName,
+                productSku: el.dataset.productSku,
+                categoryName: el.dataset.categoryName,
+                fabric: el.dataset.fabric,
+                fit: el.dataset.fit,
+                size: el.dataset.size,
+                mrp: mrp,
+                offer: offer,
+                discountPct: discountPct,
+                saveAmount: saveAmount,
+                barcode: el.dataset.barcode,
+                copies: qty
+            });
+        }
+    });
+
+    const totalCopies = selectedVariantsList.reduce((acc, it) => acc + it.copies, 0);
+    document.getElementById('totalLabelsBadge').innerText = totalCopies;
+
+    renderLabelsPreview();
+}
+
+function regenerateLabels() {
+    renderLabelsPreview();
+}
+
+// Build and render HTML labels
+function renderLabelsPreview() {
+    const screenGrid = document.getElementById('screenPreviewGrid');
+    const printArea = document.getElementById('barcodePrintArea');
+    const emptyPlaceholder = document.getElementById('previewEmptyPlaceholder');
+    const previewBox = document.getElementById('screenPreviewScrollBox');
+
+    screenGrid.innerHTML = '';
+    printArea.innerHTML = '';
+
+    const showBarcode1D = document.getElementById('optShowBarcode1D').checked;
+    const showQrCode = document.getElementById('optShowQrCode').checked;
+    const showSaveBadge = document.getElementById('optShowSaveBadge').checked;
+    const showExchange = document.getElementById('optShowExchangePolicy').checked;
+
+    if (selectedVariantsList.length === 0) {
+        emptyPlaceholder.classList.remove('hidden');
+        previewBox.classList.add('hidden');
+        return;
+    }
+
+    emptyPlaceholder.classList.add('hidden');
+    previewBox.classList.remove('hidden');
+
+    let labelIndex = 0;
+
+    selectedVariantsList.forEach(item => {
+        for (let i = 0; i < item.copies; i++) {
+            labelIndex++;
+            const labelId = `lbl_${labelIndex}`;
+            const barcodeSvgId = `bc_${labelId}`;
+            const qrCanvasId = `qr_${labelId}`;
+
+            // Create Label Element
+            const labelHtml = createLabelMarkup(item, barcodeSvgId, qrCanvasId, showBarcode1D, showQrCode, showSaveBadge, showExchange);
+
+            // Screen card wrapper
+            const screenCard = document.createElement('div');
+            screenCard.className = 'label-card p-3 border border-gray-200 rounded-xl bg-white shadow-sm';
+            screenCard.innerHTML = labelHtml;
+            screenGrid.appendChild(screenCard);
+
+            // Print card wrapper (rendered directly in printArea)
+            const printCard = document.createElement('div');
+            printCard.className = 'label-card';
+            printCard.innerHTML = labelHtml;
+            printArea.appendChild(printCard);
+
+            // Render 1D Barcode with JsBarcode (Code128)
+            if (showBarcode1D) {
+                renderCode128(`#${barcodeSvgId}`, item.barcode);
+                renderCode128(printCard.querySelector('svg'), item.barcode);
+            }
+
+            // Render 2D QR Code with QRCode.js
+            if (showQrCode) {
+                const qrText = `https://sadgurukrupa.store/tag/${encodeURIComponent(item.barcode)}`;
+                renderQrCode(screenCard.querySelector('.qr-container'), qrText);
+                renderQrCode(printCard.querySelector('.qr-container'), qrText);
+            }
+        }
+    });
+}
+
+function createLabelMarkup(item, barcodeSvgId, qrCanvasId, showBarcode1D, showQrCode, showSaveBadge, showExchange) {
+    const isThermalSmall = currentLayoutFormat === 'thermal-50x25';
+    const isThermalMedium = currentLayoutFormat === 'thermal-50x35';
+    const isHangTag = currentLayoutFormat === 'hangtag';
+
+    if (isThermalSmall) {
+        // Compact 50x25mm layout (Dense thermal)
+        return `
+            <div class="h-full flex flex-col justify-between font-sans text-black leading-tight text-[8px]">
+                <div class="flex items-center justify-between border-b border-black pb-0.5">
+                    <span class="font-black text-[9px] uppercase tracking-wider">SADGURU KRUPA</span>
+                    <span class="font-extrabold bg-black text-white px-1 rounded text-[8px]">SIZE: ${item.size}</span>
+                </div>
+                <div class="font-bold truncate text-[8px] mt-0.5">${item.productName}</div>
+                <div class="flex items-center justify-between text-[7px] font-semibold text-gray-700">
+                    <span>MRP: ₹${item.mrp}</span>
+                    <span class="font-black text-[9px] text-black">OFFER: ₹${item.offer}</span>
+                </div>
+                ${showBarcode1D ? `
+                <div class="flex flex-col items-center justify-center my-0.5">
+                    <svg id="${barcodeSvgId}" class="w-full max-h-5"></svg>
+                    <span class="font-mono text-[7px] font-bold tracking-tight">${item.barcode}</span>
+                </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    if (isHangTag) {
+        // Premium Boutique Hang Tag 60x90mm
+        return `
+            <div class="h-full flex flex-col justify-between font-sans text-black p-1 text-[10px]">
+                <div class="text-center pb-2 border-b-2 border-black">
+                    <div class="font-black text-sm tracking-widest uppercase">SADGURU KRUPA</div>
+                    <div class="text-[8px] uppercase tracking-widest text-amber-800 font-extrabold">Everything For Mens</div>
+                    <div class="text-[7px] text-gray-600">Shop 01, Delhi Gate, Ahilyanagar</div>
+                </div>
+
+                <div class="text-center my-2 space-y-1">
+                    <div class="font-bold text-xs leading-snug line-clamp-2">${item.productName}</div>
+                    <div class="text-[9px] text-gray-600 font-medium">${item.fabric} &bull; ${item.fit}</div>
+                    <div class="inline-block bg-black text-white px-3 py-1 rounded-md font-black text-xs">
+                        SIZE: ${item.size}
+                    </div>
+                </div>
+
+                ${showBarcode1D ? `
+                <div class="flex flex-col items-center justify-center my-1">
+                    <svg id="${barcodeSvgId}" class="w-full max-h-8"></svg>
+                    <span class="font-mono text-[8px] font-bold tracking-wider">${item.barcode}</span>
+                </div>
+                ` : ''}
+
+                <div class="bg-gray-100 p-2 rounded-lg text-center space-y-0.5 border border-gray-300">
+                    <div class="text-[9px] text-gray-500">Maximum Retail Price:</div>
+                    <div class="flex items-center justify-center gap-2">
+                        <span class="line-through text-gray-500 text-xs font-bold">₹${item.mrp}</span>
+                        <span class="font-black text-base text-black">₹${item.offer}</span>
+                    </div>
+                    ${showSaveBadge && item.saveAmount > 0 ? `
+                    <div class="text-[8px] font-black text-emerald-800 uppercase tracking-wide">
+                        SAVE ₹${item.saveAmount} (${item.discountPct}% OFF)
+                    </div>
+                    ` : ''}
+                    <div class="text-[7px] text-gray-500">(Incl. of all taxes)</div>
+                </div>
+
+                <div class="text-center text-[7px] text-gray-500 pt-1 border-t border-dashed border-gray-300">
+                    7 Days Return/Exchange with Tag Intact
+                </div>
+            </div>
+        `;
+    }
+
+    // Default: Standard A4 Sheet (70mm x 37mm) & 50x35mm
+    return `
+        <div class="h-full flex flex-col justify-between font-sans text-black leading-tight p-1 box-border">
+            
+            <!-- Brand & Size Header -->
+            <div class="flex items-center justify-between border-b border-black pb-0.5">
+                <div>
+                    <span class="font-black text-[9px] tracking-wider uppercase">SADGURU KRUPA</span>
+                    <span class="text-[7px] text-gray-600 block leading-none">Ahilyanagar &bull; Menswear</span>
+                </div>
+                <div class="text-right">
+                    <span class="font-black bg-black text-white px-1.5 py-0.5 rounded text-[9px]">SIZE: ${item.size}</span>
+                </div>
+            </div>
+
+            <!-- Garment Title & Fabric -->
+            <div class="my-0.5">
+                <div class="font-bold text-[9px] truncate text-black">${item.productName}</div>
+                <div class="text-[7px] text-gray-600 truncate">${item.fabric} &bull; ${item.fit}</div>
+            </div>
+
+            <!-- Barcode & QR Center Split -->
+            <div class="flex items-center justify-between gap-1 my-0.5">
+                ${showBarcode1D ? `
+                <div class="flex-1 flex flex-col items-center justify-center min-w-0">
+                    <svg id="${barcodeSvgId}" class="w-full max-h-6"></svg>
+                    <span class="font-mono text-[7px] font-black tracking-tight text-center truncate w-full">${item.barcode}</span>
+                </div>
+                ` : ''}
+
+                ${showQrCode ? `
+                <div class="qr-container shrink-0 w-8 h-8 flex items-center justify-center border border-gray-200 p-0.5 rounded"></div>
+                ` : ''}
+            </div>
+
+            <!-- Price & Savings Footer -->
+            <div class="flex items-center justify-between border-t border-black pt-0.5 text-[8px]">
+                <div class="leading-none">
+                    <span class="text-gray-500 line-through text-[7px]">MRP: ₹${item.mrp}</span>
+                    <div class="font-black text-[10px] text-black">OFFER: ₹${item.offer}</div>
+                </div>
+                ${showSaveBadge && item.saveAmount > 0 ? `
+                <div class="bg-black text-white text-[7px] font-extrabold px-1 py-0.5 rounded uppercase tracking-tighter">
+                    Save ₹${item.saveAmount}
+                </div>
+                ` : ''}
+            </div>
+
+        </div>
+    `;
+}
+
+function renderCode128(target, text) {
+    if (!target) return;
+    try {
+        JsBarcode(target, text, {
+            format: "CODE128",
+            lineColor: "#000000",
+            width: 1.1,
+            height: 24,
+            displayValue: false,
+            margin: 0
+        });
+    } catch (e) {
+        console.warn('JsBarcode render error:', e);
+    }
+}
+
+function renderQrCode(container, text) {
+    if (!container) return;
+    container.innerHTML = '';
+    try {
+        new QRCode(container, {
+            text: text,
+            width: 32,
+            height: 32,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.M
+        });
+    } catch (e) {
+        console.warn('QRCode render error:', e);
+    }
+}
+
+// Print Action
+function triggerLabelPrint() {
+    if (selectedVariantsList.length === 0) {
+        alert('Please select at least one garment variant to print tags.');
+        return;
+    }
+    window.print();
+}
+</script>
+{% endblock %}

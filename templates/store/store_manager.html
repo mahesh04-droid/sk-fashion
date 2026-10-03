@@ -40,11 +40,16 @@
                     Manage online orders, track daily revenue velocity, inspect customer pickups, and adjust inventory.
                 </p>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2.5">
+                <a href="{% url 'barcode_label_generator' %}"
+                   class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-brand-gold flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-tags text-brand-gold"></i>
+                    <span>Barcode Price Tags</span>
+                </a>
                 <a href="{% url 'pos_terminal' %}"
-                   class="btn-gold px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
+                   class="btn-gold px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 shadow-md">
                     <i class="fa-solid fa-cash-register"></i>
-                    <span>Showroom Counter POS</span>
+                    <span>Showroom POS</span>
                 </a>
                 <a href="{% url 'admin:index' %}" target="_blank"
                    class="btn-outline px-4 py-2.5 rounded-xl text-xs font-bold hover:border-brand-gold flex items-center gap-1.5 shadow-sm">
