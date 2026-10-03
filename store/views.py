@@ -11,7 +11,10 @@ from django.db.models import Q, Sum, F, Count
 from django.utils import timezone
 from datetime import timedelta
 from django.conf import settings
-import razorpay
+try:
+    import razorpay
+except ImportError:
+    razorpay = None
 from .models import Category, Product, ProductVariant, StoreBanner, Order, OrderItem, CustomerReview, Coupon, CustomerProfile
 
 
